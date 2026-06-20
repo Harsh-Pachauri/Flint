@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { API_BASE, getAuthToken, getJSON, postJSON } from '../../utils/api';
+import { API_BASE, getAuthToken, getJSON } from '../../utils/api';
 
 type MatchItem = {
   matchId: string;
@@ -35,43 +35,7 @@ type ChatMessage = {
   mediaUrl?: string | null;
 };
 
-type PlayroomInfo = {
-  playroomId: string;
-  spiceLevel: number;
-  unlockedFeatures: string[];
-  isActive: boolean;
-  activeSession: { sessionId: string; gameType: string; currentRound: number } | null;
-};
-
-type GameState = {
-  gameType: 'dareRoulette' | 'storyBuilding' | 'wyouldYouRather' | '';
-  gameSessionId: string;
-};
-
 type ProfilePhoto = string | { url?: string | null } | null | undefined;
-
-type CompatibilityAnswerMap = Record<string, 'A' | 'B' | ''>;
-
-const COMPATIBILITY_QUESTIONS = [
-  {
-    id: 'q1',
-    prompt: 'A perfect first date feels...',
-    optionA: 'Spontaneous and playful',
-    optionB: 'Calm and thoughtful',
-  },
-  {
-    id: 'q2',
-    prompt: 'Your ideal weekend is...',
-    optionA: 'Busy, social, and full of plans',
-    optionB: 'Low-key, cozy, and private',
-  },
-  {
-    id: 'q3',
-    prompt: 'When texting someone new, you prefer...',
-    optionA: 'Quick replies and lots of energy',
-    optionB: 'Slower, meaningful messages',
-  },
-] as const;
 
 function getDisplayName(name?: string | null, fallback = 'Match') {
   const value = String(name || '').trim();
@@ -133,14 +97,7 @@ function Matches() {
   const [loadingConversation, setLoadingConversation] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
-  const [playroom, setPlayroom] = useState<PlayroomInfo | null>(null);
-  const [loadingPlayroom, setLoadingPlayroom] = useState(false);
-  const [activeGame, setActiveGame] = useState<GameState | null>(null);
-  const [gamePayload, setGamePayload] = useState<any>(null);
-  const [gameMessage, setGameMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [compatibilityAnswers, setCompatibilityAnswers] = useState<CompatibilityAnswerMap>({ q1: '', q2: '', q3: '' });
-  const [submittingCompatibility, setSubmittingCompatibility] = useState(false);
+  const [sending] = useState(false);
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#/matches');
   const [showMatchesMobile, setShowMatchesMobile] = useState(false);
   const socketRef = useRef<Socket | null>(null);
@@ -192,44 +149,28 @@ function Matches() {
     if (!activeMatchId) {
       setMatchDetail(null);
       setMessages([]);
-      setPlayroom(null);
-      setActiveGame(null);
-      setGamePayload(null);
-      setGameMessage('');
-      setCompatibilityAnswers({ q1: '', q2: '', q3: '' });
-      setCompatibilityAnswers({ q1: '', q2: '', q3: '' });
       return;
     }
 
     let alive = true;
     async function loadMatchContext() {
       setLoadingConversation(true);
-      setLoadingPlayroom(true);
       setError('');
       try {
-        const [detail, chat, playroomData] = await Promise.all([
+        const [detail, chat] = await Promise.all([
           getJSON(`/api/matches/${activeMatchId}`),
           getJSON(`/api/matches/${activeMatchId}/messages?limit=40`),
-          getJSON(`/api/matches/${activeMatchId}/playroom`),
         ]);
 
         if (!alive) return;
 
         setMatchDetail(detail);
         setMessages(chat.messages || []);
-        setPlayroom(playroomData);
-        if (playroomData?.activeSession) {
-          setActiveGame({
-            gameType: playroomData.activeSession.gameType,
-            gameSessionId: playroomData.activeSession.sessionId,
-          });
-        }
       } catch (err: any) {
         if (alive) setError(err?.error || err?.message || 'Could not load match conversation');
       } finally {
         if (alive) {
           setLoadingConversation(false);
-          setLoadingPlayroom(false);
         }
       }
     }
@@ -253,7 +194,6 @@ function Matches() {
       auth: { token },
       transports: ['websocket'],
     });
-
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -284,293 +224,12 @@ function Matches() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, gamePayload]);
-
-  async function refreshPlayroom() {
-    if (!activeMatchId) return;
-    try {
-      const data = await getJSON(`/api/matches/${activeMatchId}/playroom`);
-      setPlayroom(data);
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not refresh playroom');
-    }
-  }
-
-  async function activatePlayroom() {
-    if (!activeMatchId) return;
-    setLoadingPlayroom(true);
-    try {
-      const data = await postJSON(`/api/matches/${activeMatchId}/playroom/activate`, {});
-      setToast(data?.message || 'Playroom activated');
-      await refreshPlayroom();
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not activate playroom');
-    } finally {
-      setLoadingPlayroom(false);
-    }
-  }
-
-  async function submitCompatibilityTest() {
-    if (!activeMatchId) return;
-
-    const answers = COMPATIBILITY_QUESTIONS.map((question) => ({
-      questionId: question.id,
-      answer: compatibilityAnswers[question.id],
-    }));
-
-    if (answers.some((answer) => !answer.answer)) {
-      setToast('Choose an answer for each compatibility question first');
-      return;
-    }
-
-    setSubmittingCompatibility(true);
-    try {
-      const data = await postJSON(`/api/matches/${activeMatchId}/compatibility-test`, { answers });
-      setToast(data?.message || 'Compatibility submitted');
-      setMatchDetail((prev) => prev ? {
-        ...prev,
-        compatibilityTest: {
-          completed: true,
-          score: data.compatibilityScore,
-        },
-      } : prev);
-
-      const refreshed = await getJSON(`/api/matches/${activeMatchId}`);
-      setMatchDetail(refreshed);
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not submit compatibility test');
-    } finally {
-      setSubmittingCompatibility(false);
-    }
-  }
-
-  async function startGame(gameType: 'dareRoulette' | 'storyBuilding' | 'wyouldYouRather') {
-    if (!playroom?.playroomId) return;
-    try {
-      const data = await postJSON(`/api/playroom/${playroom.playroomId}/session`, { gameType });
-      setActiveGame({ gameType, gameSessionId: data.gameSession });
-      setGamePayload(null);
-      setGameMessage(data?.message || `${gameType} started`);
-      setToast(data?.message || 'Game started');
-      if (gameType === 'storyBuilding') {
-        const story = await getJSON(`/api/story/${data.gameSession}`);
-        setGamePayload(story);
-      }
-      if (gameType === 'wyouldYouRather') {
-        const wyr = await getJSON(`/api/wyr/${data.gameSession}`);
-        setGamePayload(wyr);
-      }
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not start the game');
-    }
-  }
-
-  async function sendMessage() {
-    const content = draft.trim();
-    if (!content || !activeMatchId || !socketRef.current) return;
-
-    setSending(true);
-    try {
-      socketRef.current.emit('message:send', {
-        matchId: activeMatchId,
-        content,
-      });
-      setDraft('');
-      setToast('Message sent');
-    } catch (err: any) {
-      setToast(err?.message || 'Could not send message');
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function spinDare() {
-    if (!activeGame?.gameSessionId) return;
-    try {
-      const data = await postJSON(`/api/dare/${activeGame.gameSessionId}/spin`, {});
-      setGamePayload(data);
-      setGameMessage(data.message);
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not spin the wheel');
-    }
-  }
-
-  async function consentToSpin(accepted: boolean) {
-    if (!gamePayload?.spinId) return;
-    try {
-      const data = await postJSON(`/api/dare/spin/${gamePayload.spinId}/consent`, { accepted });
-      setGamePayload(data);
-      setGameMessage(data.message || (accepted ? 'Consent recorded' : 'Dare skipped'));
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not submit consent');
-    }
-  }
-
-  async function completeDare(skipped = false) {
-    const dareCardId = gamePayload?.dareCard?.dareCardId;
-    if (!dareCardId) return;
-    try {
-      const data = await postJSON(`/api/dare/card/${dareCardId}/complete`, skipped ? { skipped: true } : { proofType: 'photo', proofUrl: 'https://example.com/proof.jpg', skipped: false });
-      setGamePayload(data);
-      setGameMessage(data.message);
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not complete dare');
-    }
-  }
-
-  async function submitStoryEntry() {
-    const text = String(gamePayload?.draftText || '').trim();
-    if (!text || !activeGame?.gameSessionId) return;
-    try {
-      const data = await postJSON(`/api/story/${activeGame.gameSessionId}/entry`, { text });
-      setGamePayload((prev: any) => ({ ...prev, draftText: '', lastResponse: data }));
-      setGameMessage(data.message);
-      const story = await getJSON(`/api/story/${activeGame.gameSessionId}`);
-      setGamePayload(story);
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not add story entry');
-    }
-  }
-
-  async function submitWyrAnswer(questionId: string, chosenOption: 'A' | 'B') {
-    try {
-      const data = await postJSON(`/api/wyr/question/${questionId}/answer`, { chosenOption });
-      setGameMessage(data.message);
-      const wyr = await getJSON(`/api/wyr/${activeGame?.gameSessionId}`);
-      setGamePayload(wyr);
-    } catch (err: any) {
-      setToast(err?.error || err?.message || 'Could not submit answer');
-    }
-  }
+  }, [messages]);
 
   const activeMatch = matches.find((item) => item.matchId === activeMatchId) || null;
   const fallbackOtherUser = getDisplayName(matchDetail?.otherUser?.name || activeMatch?.otherUser?.name);
   const activeMatchAvatar = getPhotoUrl(matchDetail?.otherUser?.photos || activeMatch?.otherUser?.photos);
   const activeMatchProfileId = getProfileUserId(matchDetail?.otherUser || activeMatch?.otherUser);
-
-  const renderGamePanel = () => {
-    if (!activeGame) {
-      return (
-        <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px', lineHeight: 1.7, fontFamily: 'var(--f2)', color: 'var(--t2)' }}>
-          Activate the playroom to unlock game sessions. The current design supports Dare Roulette, Story Building, and Would You Rather.
-        </div>
-      );
-    }
-
-    if (activeGame.gameType === 'dareRoulette') {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-            <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--spark)', letterSpacing: '0.12em', marginBottom: '8px' }}>DARE ROULETTE</div>
-            <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '16px', color: 'var(--t1)', marginBottom: '10px' }}>Spin the wheel and wait for consent</div>
-            <button type="button" onClick={spinDare} style={{ background: 'var(--spark)', border: 'none', color: '#fff', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '10px 16px', borderRadius: '100px', cursor: 'pointer' }}>
-              Spin wheel
-            </button>
-          </div>
-
-          {gamePayload?.landedCategory ? (
-            <div style={{ background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-              <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)', letterSpacing: '0.08em', marginBottom: '6px' }}>RESULT</div>
-              <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '15px', color: 'var(--t1)', marginBottom: '10px' }}>{gamePayload.landedCategory}</div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={() => consentToSpin(true)} style={{ flex: 1, background: 'var(--spark)', border: 'none', color: '#fff', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-                  Consent
-                </button>
-                <button type="button" onClick={() => consentToSpin(false)} style={{ flex: 1, background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--t2)', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-                  Skip
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {gamePayload?.dareCard ? (
-            <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-              <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)', letterSpacing: '0.08em', marginBottom: '6px' }}>DARE CARD</div>
-              <div style={{ fontFamily: 'var(--f2)', color: 'var(--t1)', lineHeight: 1.7, marginBottom: '10px' }}>{gamePayload.dareCard.dareText}</div>
-              <button type="button" onClick={() => completeDare(false)} style={{ width: '100%', background: 'var(--vio)', border: 'none', color: '#fff', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-                Mark complete
-              </button>
-              <button type="button" onClick={() => completeDare(true)} style={{ width: '100%', marginTop: '8px', background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--t2)', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-                Skip dare
-              </button>
-            </div>
-          ) : null}
-        </div>
-      );
-    }
-
-    if (activeGame.gameType === 'storyBuilding') {
-      const story = gamePayload;
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-            <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--spark)', letterSpacing: '0.12em', marginBottom: '8px' }}>STORY BUILDING</div>
-            <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '16px', color: 'var(--t1)', marginBottom: '8px' }}>Build the story together</div>
-            <textarea
-              rows={4}
-              value={story?.draftText || ''}
-              onChange={(event) => setGamePayload((prev: any) => ({ ...prev, draftText: event.target.value }))}
-              placeholder="Write the next sentence..."
-              style={{ width: '100%', resize: 'none', background: 'var(--card3)', border: '1px solid var(--border)', color: 'var(--t1)', borderRadius: '12px', padding: '12px', fontFamily: 'var(--f2)', fontSize: '12px', lineHeight: 1.7, outline: 'none' }}
-            />
-            <button type="button" onClick={submitStoryEntry} style={{ width: '100%', marginTop: '10px', background: 'var(--spark)', border: 'none', color: '#fff', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-              Add sentence
-            </button>
-          </div>
-
-          <div style={{ background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-            <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)', letterSpacing: '0.08em', marginBottom: '8px' }}>CURRENT STORY</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {(story?.entries || []).map((entry: any) => (
-                <div key={entry.entryId} style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '10px 12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', color: 'var(--t1)' }}>{entry.userName}</span>
-                    <span style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)' }}>#{entry.position}</span>
-                  </div>
-                  <div style={{ fontFamily: 'var(--f2)', fontSize: '12px', color: 'var(--t2)', lineHeight: 1.6 }}>{entry.text}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeGame.gameType === 'wyouldYouRather') {
-      const wyr = gamePayload;
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-            <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--vio)', letterSpacing: '0.12em', marginBottom: '8px' }}>WOULD YOU RATHER</div>
-            <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '16px', color: 'var(--t1)', marginBottom: '10px' }}>Answer, then compare with your match</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {(wyr?.questions || []).slice(0, 3).map((question: any) => (
-                <div key={question.questionId} style={{ background: 'var(--card3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '10px' }}>
-                  <div style={{ fontFamily: 'var(--f2)', fontSize: '12px', color: 'var(--t1)', marginBottom: '8px', lineHeight: 1.6 }}>{question.optionA} / {question.optionB}</div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" onClick={() => submitWyrAnswer(question.questionId, 'A')} style={{ flex: 1, background: 'var(--spark)', border: 'none', color: '#fff', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '9px', borderRadius: '10px', cursor: 'pointer' }}>
-                      Option A
-                    </button>
-                    <button type="button" onClick={() => submitWyrAnswer(question.questionId, 'B')} style={{ flex: 1, background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--t2)', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', padding: '9px', borderRadius: '10px', cursor: 'pointer' }}>
-                      Option B
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px' }}>
-            <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)', letterSpacing: '0.08em', marginBottom: '8px' }}>SYNC SCORE</div>
-            <div style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: '24px', color: 'var(--spark)' }}>{wyr?.syncScore || 0}%</div>
-            <div style={{ fontFamily: 'var(--f2)', fontSize: '12px', color: 'var(--t2)', lineHeight: 1.6, marginTop: '6px' }}>{wyr?.syncBadge || 'Answer a few rounds to unlock a badge.'}</div>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
 
   return (
     <div style={{ background: 'var(--void)', minHeight: '100vh', color: 'var(--t1)' }}>

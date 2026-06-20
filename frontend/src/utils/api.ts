@@ -64,12 +64,16 @@ async function requestJSON(path: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH
       } catch (e) {
         // refresh failed - clear tokens and surface original error
         clearAuthTokens();
-        throw { status: res.status, ...json };
+        const error = new Error(json?.error || 'Unauthorized');
+        Object.assign(error, { status: res.status, ...json });
+        throw error;
       }
     }
 
     // Other errors, or second attempt failed
-    throw { status: res.status, ...json };
+    const error = new Error(json?.error || `Request failed with status ${res.status}`);
+    Object.assign(error, { status: res.status, ...json });
+    throw error;
   }
 }
 
@@ -92,7 +96,9 @@ async function refreshAccessToken() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
       refreshingPromise = null;
-      throw json || new Error('Failed to refresh token');
+      const error = new Error(json?.error || 'Failed to refresh token');
+      Object.assign(error, json);
+      throw error;
     }
 
     // Save new tokens

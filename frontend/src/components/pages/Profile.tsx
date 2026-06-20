@@ -50,6 +50,17 @@ interface UploadItem {
   error?: string;
 }
 
+function animateBars(matchBarRef: React.RefObject<HTMLDivElement>) {
+  if (matchBarRef.current) {
+    matchBarRef.current.style.width = '75%';
+  }
+  document.querySelectorAll('.traitbar').forEach((bar: Element) => {
+    const htmlBar = bar as HTMLElement;
+    const val = htmlBar.dataset.val || '50';
+    htmlBar.style.width = val + '%';
+  });
+}
+
 const Profile: React.FC = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,13 +78,18 @@ const Profile: React.FC = () => {
   const [galleryMenuOpen, setGalleryMenuOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [deletePhotosOpen, setDeletePhotosOpen] = useState(false);
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [, setUploadingPhotos] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
   const uploadXhrsRef = useRef<Record<string, XMLHttpRequest | null>>({});
+  const uploadItemsRef = useRef<UploadItem[]>([]);
   const photoFingerprintRef = useRef<Set<string>>(new Set());
 
-  const loadProfile = async () => {
+  useEffect(() => {
+    uploadItemsRef.current = uploadItems;
+  }, [uploadItems]);
+
+  const loadProfile = React.useCallback(async () => {
     try {
       setLoading(true);
       const token = getAuthToken();
@@ -101,7 +117,7 @@ const Profile: React.FC = () => {
 
       // Trigger animations after data loads
       setTimeout(() => {
-        animateBars();
+        animateBars(matchBarRef);
       }, 300);
     } catch (err: any) {
       setError(err.message || 'Failed to load profile');
@@ -109,26 +125,17 @@ const Profile: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [matchBarRef]);
 
   useEffect(() => {
     loadProfile();
+    const currentUploadXhrs = uploadXhrsRef.current;
+    const currentUploadItems = uploadItemsRef.current;
     return () => {
-      Object.values(uploadXhrsRef.current).forEach((xhr) => xhr?.abort());
-      uploadItems.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      Object.values(currentUploadXhrs).forEach((xhr) => xhr?.abort());
+      currentUploadItems.forEach((item) => URL.revokeObjectURL(item.previewUrl));
     };
-  }, []);
-
-  const animateBars = () => {
-    if (matchBarRef.current) {
-      matchBarRef.current.style.width = '75%';
-    }
-    document.querySelectorAll('.traitbar').forEach((bar: Element) => {
-      const htmlBar = bar as HTMLElement;
-      const val = htmlBar.dataset.val || '50';
-      htmlBar.style.width = val + '%';
-    });
-  };
+  }, [loadProfile]);
 
   const drawCover = (canvasId: string, c1: string, c2: string, c3: string, h: number = 120) => {
     const cv = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -976,7 +983,7 @@ const Profile: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.3fr) minmax(260px, 0.7fr)', minHeight: '64vh' }}>
                   <div style={{ background: '#0b0b18', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
                     {photoPreviewUrl ? (
-                      <img src={photoPreviewUrl} alt="Photo preview" style={{ width: '100%', height: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: 14 }} />
+                      <img src={photoPreviewUrl} alt="Selected preview" style={{ width: '100%', height: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: 14 }} />
                     ) : (
                       <div style={{ color: 'var(--t3)', fontFamily: 'var(--f2)' }}>No photo selected</div>
                     )}

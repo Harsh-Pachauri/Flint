@@ -443,7 +443,7 @@ const PublicProfile: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.3fr) minmax(260px, 0.7fr)', minHeight: '64vh' }}>
               <div style={{ background: '#0b0b18', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
                 {photoPreviewUrl ? (
-                  <img src={photoPreviewUrl} alt="Photo preview" style={{ width: '100%', height: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: 14 }} />
+                  <img src={photoPreviewUrl} alt="Selected preview" style={{ width: '100%', height: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: 14 }} />
                 ) : (
                   <div style={{ color: 'var(--t3)', fontFamily: 'var(--f2)' }}>No photo selected</div>
                 )}
