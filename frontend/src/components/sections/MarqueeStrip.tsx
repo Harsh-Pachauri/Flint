@@ -1,0 +1,83 @@
+import React, { useEffect, useRef } from 'react';
+
+const MarqueeStrip: React.FC = () => {
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const mq1Ref = useRef<HTMLDivElement>(null);
+  const mq2Ref = useRef<HTMLDivElement>(null);
+
+  const items = [
+    'VERIFIED STUDENTS',
+    'CAMPUS MATCHES',
+    'DARE ROULETTE',
+    'PRIVACY FIRST',
+    'PLAYROOM',
+    'VIT VELLORE',
+    'BITS PILANI',
+    'NIT TRICHY',
+    'IIT BOMBAY',
+    'NO STRANGERS',
+    'REAL CONNECTIONS',
+    'DRAMA CLUB',
+    'CHESS CLUB',
+    'PHOTOGRAPHY',
+  ];
+
+  const colors = ['var(--spark)', 'var(--vio)', 'var(--rose)', 'var(--sky)'];
+
+  useEffect(() => {
+    const mkItem = (text: string, i: number) => {
+      const s = document.createElement('span');
+      s.style.cssText = `font-family: var(--f3); font-size: 10px; color: ${colors[i % 4]}; padding: 0 18px; border-right: 1px solid var(--border); letter-spacing: 0.08em; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;`;
+      s.innerHTML = `<span style="width: 4px; height: 4px; border-radius: 50%; background: ${colors[i % 4]}; display: inline-block; flex-shrink: 0;"></span>${text}`;
+      return s;
+    };
+
+    if (mq1Ref.current && mq2Ref.current) {
+      items.forEach((t, i) => {
+        mq1Ref.current?.appendChild(mkItem(t, i));
+        mq2Ref.current?.appendChild(mkItem(t, i));
+      });
+
+      let w = 0;
+      const measure = () => {
+        if (mq1Ref.current) w = mq1Ref.current.offsetWidth;
+      };
+      measure();
+      requestAnimationFrame(measure);
+
+      let pos = 0;
+      const tick = () => {
+        pos -= 0.5;
+        if (Math.abs(pos) >= w) pos = 0;
+        if (marqueeRef.current) marqueeRef.current.style.transform = `translateX(${pos}px)`;
+        requestAnimationFrame(tick);
+      };
+
+      setTimeout(tick, 300);
+    }
+  }, []);
+
+  return (
+    <div
+      style={{
+        borderTop: '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--s1)',
+        overflow: 'hidden',
+        padding: '11px 0',
+        position: 'relative',
+      }}
+    >
+      <div
+        ref={marqueeRef}
+        id="marquee"
+        style={{ display: 'flex', gap: 0, whiteSpace: 'nowrap' }}
+      >
+        <div ref={mq1Ref} style={{ display: 'flex', gap: 0, flexShrink: 0 }}></div>
+        <div ref={mq2Ref} style={{ display: 'flex', gap: 0, flexShrink: 0 }}></div>
+      </div>
+    </div>
+  );
+};
+
+export default MarqueeStrip;

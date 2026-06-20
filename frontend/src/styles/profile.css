@@ -1,0 +1,151 @@
+/* Profile Page Styles */
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--f3);
+  font-size: 9px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  letter-spacing: 0.07em;
+}
+
+.pill-spark {
+  background: var(--spd);
+  border: 1px solid rgba(224, 48, 192, 0.22);
+  color: var(--spark);
+}
+
+.pill-vio {
+  background: var(--vid);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  color: var(--vio);
+}
+
+.pill-rose {
+  background: var(--rod);
+  border: 1px solid rgba(255, 107, 157, 0.22);
+  color: var(--rose);
+}
+
+.pill-sky {
+  background: var(--skd);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  color: var(--sky);
+}
+
+.pill-amber {
+  background: var(--amd);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  color: var(--amber);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+}
+
+.eyebrow {
+  font-family: var(--f3);
+  font-size: 9px;
+  color: var(--spark);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  background: var(--spark);
+  flex-shrink: 0;
+}
+
+.trait-chip {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: var(--f2);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--t2);
+}
+
+.profile-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.sticky-left {
+  position: relative;
+}
+
+.photo-grid {
+  position: relative;
+}
+
+@media (max-width: 700px) {
+  .profile-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sticky-left {
+    position: static !important;
+  }
+
+  .photo-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .compat-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Canvas and animations */
+canvas {
+  image-rendering: auto;
+  image-rendering: crisp-edges;
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}

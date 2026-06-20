@@ -1,0 +1,15 @@
+/* Homepage specific styles */
+
+@media (max-width: 700px) {
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .feat-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

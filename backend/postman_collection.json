@@ -1,0 +1,1365 @@
+{
+  "info": {
+    "name": "Dating App API",
+    "description": "Complete API collection for dating app with 43 endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.collectionVariables.set('access_token', json.accessToken);",
+                  "  if (json.refreshToken) pm.collectionVariables.set('refresh_token', json.refreshToken);",
+                  "  if (json.userId) pm.collectionVariables.set('userId', json.userId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.collectionVariables.set('access_token', json.accessToken);",
+                  "  if (json.refreshToken) pm.collectionVariables.set('refresh_token', json.refreshToken);",
+                  "  if (json.userId) pm.collectionVariables.set('userId', json.userId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.collectionVariables.set('access_token', json.accessToken);",
+                  "  if (json.refreshToken) pm.collectionVariables.set('refresh_token', json.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"userId\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "reset-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Create Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"age\": 25,\n  \"gender\": \"male\",\n  \"genderPreference\": \"female\",\n  \"datingType\": \"serious\",\n  \"bio\": \"Adventure seeker and coffee lover\",\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-73.856077, 40.848447]\n  },\n  \"year\": 3,\n  \"depart\": \"Computer Science\",\n  \"vibewords\": [\"adventurous\", \"tech-savvy\", \"coffee-lover\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Updated bio\",\n  \"genderPreference\": \"both\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/profile/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile", "me"]
+            }
+          }
+        },
+        {
+          "name": "Submit AI Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\"option1\", \"option2\", \"option3\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/profile/ai-assessment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile", "ai-assessment"]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Upload Photos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photos",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/profile/photos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile", "photos"]
+            }
+          }
+        },
+        {
+          "name": "Delete Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile/photos/{{photoId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile", "photos", "{{photoId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Discovery",
+      "item": [
+        {
+          "name": "Get Feed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/feed?distance=50&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "feed"],
+              "query": [
+                {
+                  "key": "distance",
+                  "value": "50"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/recommendations/{{userId}}?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "recommendations", "{{userId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Swipe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toUserId\": \"user_id_here\",\n  \"direction\": \"like\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/swipe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swipe"]
+            }
+          }
+        },
+        {
+          "name": "Incoming Swipes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/swipes/incoming",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swipes", "incoming"]
+            }
+          }
+        },
+        {
+          "name": "Accept Swipe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/swipes/{{swipeId}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swipes", "{{swipeId}}", "accept"]
+            }
+          }
+        },
+        {
+          "name": "Reject Swipe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/swipes/{{swipeId}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swipes", "{{swipeId}}", "reject"]
+            }
+          }
+        },
+        {
+          "name": "Search Colleges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/colleges/search?query=Harvard&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "colleges", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "Harvard"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Confessions",
+      "item": [
+        {
+          "name": "Create Confession",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"I cried in placements week\",\n  \"isAnonymous\": true,\n  \"tags\": [\"#Placements\", \"#Stress\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions"]
+            }
+          }
+        },
+        {
+          "name": "Get All Confessions Feed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions?page=1&limit=10&sort=trending&tag=Placements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "trending"
+                },
+                {
+                  "key": "tag",
+                  "value": "Placements"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Confession",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions/{{confessionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions", "{{confessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Confession",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Updated confession text\",\n  \"tags\": [\"#Update\"],\n  \"isAnonymous\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions/{{confessionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions", "{{confessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Confession",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions/{{confessionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions", "{{confessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Trending Confessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions/trending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions", "trending"]
+            }
+          }
+        },
+        {
+          "name": "My Confessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/confessions/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "confessions", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Confessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/confessions/pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "confessions", "pending"]
+            }
+          }
+        },
+        {
+          "name": "Approve Confession",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/confessions/{{confessionId}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "confessions", "{{confessionId}}", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Reject Confession",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/confessions/{{confessionId}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "confessions", "{{confessionId}}", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Matches & Chat",
+      "item": [
+        {
+          "name": "Get Matches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/matches",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches"]
+            }
+          }
+        },
+        {
+          "name": "Get Match Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/matches/{{matchId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches", "{{matchId}}"]
+            }
+          }
+        },
+        {
+          "name": "Submit Compatibility Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\"A\", \"B\", \"A\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/matches/{{matchId}}/compatibility-test",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches", "{{matchId}}", "compatibility-test"]
+            }
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/matches/{{matchId}}/messages?limit=30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches", "{{matchId}}", "messages"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unmatch",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/matches/{{matchId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches", "{{matchId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Playroom",
+      "item": [
+        {
+          "name": "Get Playroom",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/matches/{{matchId}}/playroom",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches", "{{matchId}}", "playroom"]
+            }
+          }
+        },
+        {
+          "name": "Activate Playroom",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/matches/{{matchId}}/playroom/activate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches", "{{matchId}}", "playroom", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Start Game Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gameType\": \"dareRoulette\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/playroom/{{playroomId}}/session",
+              "host": ["{{base_url}}"],
+              "path": ["api", "playroom", "{{playroomId}}", "session"]
+            }
+          }
+        },
+        {
+          "name": "End Game Session",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/playroom/{{playroomId}}/session/{{sessionId}}/end",
+              "host": ["{{base_url}}"],
+              "path": ["api", "playroom", "{{playroomId}}", "session", "{{sessionId}}", "end"]
+            }
+          }
+        },
+        {
+          "name": "Get Playroom Scores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/playroom/{{playroomId}}/scores",
+              "host": ["{{base_url}}"],
+              "path": ["api", "playroom", "{{playroomId}}", "scores"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dare Roulette",
+      "item": [
+        {
+          "name": "Spin Wheel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dare/{{drSessionId}}/spin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dare", "{{drSessionId}}", "spin"]
+            }
+          }
+        },
+        {
+          "name": "Submit Dare Consent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accepted\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dare/spin/{{spinId}}/consent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dare", "spin", "{{spinId}}", "consent"]
+            }
+          }
+        },
+        {
+          "name": "Complete Dare Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proofType\": \"photo\",\n  \"proofUrl\": \"https://example.com/proof.jpg\",\n  \"skipped\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dare/card/{{dareCardId}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dare", "card", "{{dareCardId}}", "complete"]
+            }
+          }
+        },
+        {
+          "name": "Rate Dare Completion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"reactionEmoji\": \"🔥\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dare/completion/{{completionId}}/rate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dare", "completion", "{{completionId}}", "rate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Story Builder",
+      "item": [
+        {
+          "name": "Get Story Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/story/{{storySessionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "story", "{{storySessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Add Story Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Once upon a time...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/story/{{storySessionId}}/entry",
+              "host": ["{{base_url}}"],
+              "path": ["api", "story", "{{storySessionId}}", "entry"]
+            }
+          }
+        },
+        {
+          "name": "Like Story Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/story/{{storySessionId}}/like/{{entryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "story", "{{storySessionId}}", "like", "{{entryId}}"]
+            }
+          }
+        },
+        {
+          "name": "Export Story",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/story/{{storySessionId}}/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "story", "{{storySessionId}}", "export"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Would You Rather",
+      "item": [
+        {
+          "name": "Get WYR Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/wyr/{{wyrSessionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "wyr", "{{wyrSessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Submit WYR Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chosenOption\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/wyr/question/{{questionId}}/answer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "wyr", "question", "{{questionId}}", "answer"]
+            }
+          }
+        },
+        {
+          "name": "React to WYR Answer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reactionEmoji\": \"😊\",\n  \"discussionNote\": \"Nice answer!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/wyr/answer/{{answerId}}/react",
+              "host": ["{{base_url}}"],
+              "path": ["api", "wyr", "answer", "{{answerId}}", "react"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gamification",
+      "item": [
+        {
+          "name": "Claim Reward",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/rewards/claim",
+              "host": ["{{base_url}}"],
+              "path": ["api", "rewards", "claim"]
+            }
+          }
+        },
+        {
+          "name": "Get Reward Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/rewards/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "rewards", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get News Feed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/feed/news?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "feed", "news"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications?unread=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "unread",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/{{notifId}}/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "{{notifId}}", "read"]
+            }
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "read-all"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "matchId",
+      "value": ""
+    },
+    {
+      "key": "photoId",
+      "value": ""
+    },
+    {
+      "key": "notifId",
+      "value": ""
+    },
+    {
+      "key": "playroomId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "drSessionId",
+      "value": ""
+    },
+    {
+      "key": "spinId",
+      "value": ""
+    },
+    {
+      "key": "dareCardId",
+      "value": ""
+    },
+    {
+      "key": "completionId",
+      "value": ""
+    },
+    {
+      "key": "storySessionId",
+      "value": ""
+    },
+    {
+      "key": "entryId",
+      "value": ""
+    },
+    {
+      "key": "wyrSessionId",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    },
+    {
+      "key": "answerId",
+      "value": ""
+    }
+  ]
+}
