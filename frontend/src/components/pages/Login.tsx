@@ -7,6 +7,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -15,12 +16,14 @@ const Login: React.FC = () => {
     try {
       const res = await postJSON('/api/auth/login', { email, password });
       saveAuthTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken, userId: res.userId });
-      setMessage('Login successful');
+      setMessage('Welcome back! Redirecting...');
+      setMessageType('success');
       const onboardingComplete = res?.user?.onboardingComplete === true || res?.onboardingComplete === true;
       setOnboardingCompleteState(onboardingComplete);
       setTimeout(() => (window.location.hash = onboardingComplete ? '#/' : '#/onboarding'), 600);
     } catch (err: any) {
       setMessage(parseApiError(err));
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -35,54 +38,94 @@ const Login: React.FC = () => {
   }
 
   return (
-    <section style={{ padding: '60px 32px', maxWidth: '700px', margin: '20px auto' }}>
-      <div className="card" style={{ padding: 28, borderRadius: 16 }}>
-        <div className="eyebrow" style={{ marginBottom: 12 }}>Welcome back</div>
-        <h2 style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: 28, color: 'var(--t1)', marginBottom: 8 }}>
-          Log in to FLINT
-        </h2>
-        <p style={{ fontFamily: 'var(--f2)', color: 'var(--t2)', marginBottom: 18 }}>
-          Use your college email to log in.
-        </p>
+    <section style={{ padding: '80px 32px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+      {/* Background orbs */}
+      <div style={{ position: 'absolute', width: 500, height: 500, top: -100, right: -100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(224,48,192,0.06) 0%, transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', width: 400, height: 400, bottom: -80, left: -80, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+      {/* Subtle grid */}
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.02, pointerEvents: 'none', backgroundImage: 'linear-gradient(rgba(224,48,192,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(224,48,192,0.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--t2)', marginBottom: 6 }}>Email</label>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              required
-              style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--t1)' }}
-            />
+      <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1, animation: 'fadeInUp 0.5s ease both' }}>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: 36, letterSpacing: '-0.04em', color: 'var(--t1)', marginBottom: 6 }}>
+            FL<span style={{ background: 'linear-gradient(135deg, var(--spark), var(--vio))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>INT</span>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--t2)', marginBottom: 6 }}>Password</label>
-            <div style={{ position: 'relative' }}>
+          <div style={{ fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.15em' }}>COLLEGE · FIRST · DATING</div>
+        </div>
+
+        <div style={{
+          background: 'rgba(19, 18, 38, 0.6)', backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '32px 28px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--spark)', letterSpacing: '0.12em', marginBottom: 8 }}>WELCOME BACK</div>
+          <h2 style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: 26, color: 'var(--t1)', marginBottom: 6, letterSpacing: '-0.03em' }}>
+            Log in to FLINT
+          </h2>
+          <p style={{ fontFamily: 'var(--f2)', color: 'var(--t2)', fontSize: 13, marginBottom: 24, fontWeight: 300, lineHeight: 1.6 }}>
+            Use your college email to sign in.
+          </p>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.07em', marginBottom: 8 }}>EMAIL</label>
               <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type={showPassword ? 'text' : 'password'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
                 required
-                style={{ width: '100%', padding: '10px 40px 10px 10px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--t1)' }}
+                placeholder="you@college.edu"
+                className="inp"
               />
-              <button type="button" onClick={() => setShowPassword((s) => !s)} aria-label="Toggle password visibility" style={{ position: 'absolute', right: 8, top: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--t3)' }}>
-                {showPassword ? '🙈' : '👁️'}
-              </button>
             </div>
-          </div>
+            <div>
+              <label style={{ display: 'block', fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.07em', marginBottom: 8 }}>PASSWORD</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Enter your password"
+                  className="inp"
+                  style={{ paddingRight: 42 }}
+                />
+                <button type="button" onClick={() => setShowPassword((s) => !s)} aria-label="Toggle password visibility" style={{
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 16,
+                }}>
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-            <button className="btn-grad" type="submit" style={{ flex: 1 }} disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign in'}
+            <button className="btn-grad" type="submit" style={{ width: '100%', marginTop: 4, padding: '13px 0' }} disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in →'}
             </button>
-            <button type="button" className="btn-ghost" onClick={() => (window.location.hash = '#/register')}>
-              Create account
-            </button>
-          </div>
-        </form>
+          </form>
 
-        {message && <div style={{ marginTop: 12, fontFamily: 'var(--f2)', color: 'var(--t1)' }}>{message}</div>}
+          {message && (
+            <div style={{
+              marginTop: 16, padding: '10px 14px', borderRadius: 10,
+              background: messageType === 'success' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+              border: `1px solid ${messageType === 'success' ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+              fontFamily: 'var(--f2)', fontSize: 12,
+              color: messageType === 'success' ? '#22c55e' : '#ef4444',
+              animation: 'fadeInUp 0.3s ease',
+            }}>
+              {message}
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: 20, textAlign: 'center', fontFamily: 'var(--f2)', fontSize: 13, color: 'var(--t2)' }}>
+          Don't have an account?{' '}
+          <a href="#/register" style={{ color: 'var(--spark)', textDecoration: 'none', fontWeight: 600 }}>
+            Create one
+          </a>
+        </div>
       </div>
     </section>
   );

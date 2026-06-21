@@ -3,6 +3,8 @@
 @media (max-width: 700px) {
   .hero-grid {
     grid-template-columns: 1fr !important;
+    gap: 30px !important;
+    padding-top: 20px !important;
   }
 
   .feat-grid {
@@ -10,6 +12,13 @@
   }
 
   .steps-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .feat-grid {
     grid-template-columns: 1fr !important;
   }
 }

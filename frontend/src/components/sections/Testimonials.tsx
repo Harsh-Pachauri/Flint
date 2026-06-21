@@ -51,7 +51,8 @@ const Testimonials: React.FC = () => {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
         {testimonials.map((testimonial, idx) => (
-          <div key={idx} className="card" style={{ padding: '22px' }}>
+          <div key={idx} className="card" style={{ padding: '24px', animation: `fadeInUp 0.5s ${0.1 * idx}s ease both` }}>
+            <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.15, fontFamily: 'serif', lineHeight: 1, color: 'var(--spark)' }}>"</div>
             <div
               style={{
                 fontFamily: 'var(--f2)',
@@ -59,11 +60,10 @@ const Testimonials: React.FC = () => {
                 fontWeight: 300,
                 color: 'var(--t2)',
                 lineHeight: 1.8,
-                marginBottom: '16px',
-                fontStyle: 'italic',
+                marginBottom: '18px',
               }}
             >
-              "{testimonial.quote}"
+              {testimonial.quote}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div

@@ -248,7 +248,11 @@ function Matches() {
     <div style={{ background: 'var(--void)', minHeight: '100vh', color: 'var(--t1)' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '18px 18px 44px' }}>
         {loadingMatches ? (
-          <div style={{ padding: '28px 0', fontFamily: 'var(--f2)', color: 'var(--t2)' }}>Loading matches...</div>
+          <div style={{ padding: '80px 0', textAlign: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--s2)', borderTopColor: 'var(--spark)', margin: '0 auto 16px', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div style={{ fontFamily: 'var(--f2)', color: 'var(--t2)', fontSize: 14 }}>Loading your matches...</div>
+          </div>
         ) : error && matches.length === 0 ? (
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '20px', fontFamily: 'var(--f2)', color: 'var(--t2)' }}>{error}</div>
         ) : (
@@ -260,8 +264,11 @@ function Matches() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {matches.length === 0 ? (
-                  <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px', fontFamily: 'var(--f2)', color: 'var(--t2)', lineHeight: 1.7 }}>
-                    You do not have any matches yet. Go back to Discover and like a few profiles.
+                  <div style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px 16px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 28, marginBottom: 10 }}>💫</div>
+                    <div style={{ fontFamily: 'var(--f1)', fontWeight: 600, fontSize: 13, color: 'var(--t1)', marginBottom: 6 }}>No matches yet</div>
+                    <div style={{ fontFamily: 'var(--f2)', fontSize: 12, color: 'var(--t2)', lineHeight: 1.7, marginBottom: 14 }}>Head to Discover and like some profiles to start matching.</div>
+                    <button type="button" onClick={() => (window.location.hash = '#/discover')} className="btn-grad" style={{ padding: '9px 20px', fontSize: 11 }}>Go to Discover</button>
                   </div>
                 ) : (
                   matches.map((item) => {
@@ -351,8 +358,10 @@ function Matches() {
                           {loadingConversation ? (
                             <div style={{ fontFamily: 'var(--f2)', color: 'var(--t2)' }}>Loading chat...</div>
                           ) : messages.length === 0 ? (
-                            <div style={{ padding: '18px', background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '14px', fontFamily: 'var(--f2)', color: 'var(--t2)', lineHeight: 1.7 }}>
-                              No messages yet. Send the first hello.
+                            <div style={{ padding: '32px 18px', textAlign: 'center', margin: 'auto 0' }}>
+                              <div style={{ fontSize: 36, marginBottom: 12, animation: 'float 3s ease-in-out infinite' }}>👋</div>
+                              <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: 16, color: 'var(--t1)', marginBottom: 6 }}>Say hello!</div>
+                              <div style={{ fontFamily: 'var(--f2)', fontSize: 12, color: 'var(--t2)', lineHeight: 1.7 }}>No messages yet. Break the ice and send the first message.</div>
                             </div>
                           ) : (
                             messages.map((message, index) => {
@@ -362,7 +371,7 @@ function Matches() {
                               const isMe = senderId === currentUserId;
                               return (
                                 <div key={message._id || `${index}-${message.sentAt}`} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                                  <div style={{ maxWidth: '78%', background: isMe ? 'var(--spark)' : 'var(--card2)', border: '1px solid var(--border)', color: isMe ? '#fff' : 'var(--t1)', borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '10px 14px' }}>
+                                  <div style={{ maxWidth: '78%', background: isMe ? 'linear-gradient(135deg, var(--spark), rgba(139,92,246,0.8))' : 'var(--card2)', border: isMe ? 'none' : '1px solid var(--border)', color: isMe ? '#fff' : 'var(--t1)', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: '10px 14px', boxShadow: isMe ? '0 4px 12px rgba(224,48,192,0.2)' : 'none', animation: 'fadeInUp 0.2s ease' }}>
                                     <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', letterSpacing: '0.07em', color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--t3)', marginBottom: '4px' }}>
                                       {senderName || (isMe ? 'You' : fallbackOtherUser)} · {formatRelativeDate(message.sentAt)}
                                     </div>
@@ -443,7 +452,7 @@ function Matches() {
       {showMatchesMobile ? null : null}
 
       {toast ? (
-        <div style={{ position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)', background: 'var(--card2)', border: '1px solid var(--bmd)', borderRadius: '100px', padding: '9px 18px', fontFamily: 'var(--f3)', fontSize: '10px', color: 'var(--t1)', letterSpacing: '0.07em', zIndex: 120 }}>
+        <div style={{ position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)', background: 'rgba(19,18,38,0.9)', backdropFilter: 'blur(12px)', border: '1px solid var(--bmd)', borderRadius: '100px', padding: '10px 20px', fontFamily: 'var(--f3)', fontSize: '10px', color: 'var(--t1)', letterSpacing: '0.07em', zIndex: 120, animation: 'toastIn 0.3s ease', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
           {toast}
         </div>
       ) : null}

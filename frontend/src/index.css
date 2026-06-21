@@ -27,9 +27,15 @@
   --rod: rgba(255, 107, 157, 0.1);
   --sky: #38bdf8;
   --skd: rgba(56, 189, 248, 0.09);
+  --amber: #f59e0b;
+  --amd: rgba(245, 158, 11, 0.1);
+  --green: #22c55e;
+  --teal: #14b8a6;
   --f1: 'Plus Jakarta Sans', sans-serif;
   --f2: 'DM Sans', sans-serif;
   --f3: 'DM Mono', monospace;
+  --glow-spark: 0 0 20px rgba(224, 48, 192, 0.15), 0 0 60px rgba(224, 48, 192, 0.05);
+  --glow-vio: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 60px rgba(139, 92, 246, 0.05);
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap');
@@ -41,6 +47,11 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(224, 48, 192, 0.3);
+  color: #fff;
 }
 
 .orb {
@@ -102,6 +113,10 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
 }
 
+.card {
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+
 .eyebrow {
   font-family: var(--f3);
   font-size: 9px;
@@ -132,11 +147,12 @@ body {
   border: none;
   cursor: pointer;
   letter-spacing: -0.01em;
-  transition: opacity 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(224, 48, 192, 0.3);
 }
 
 .btn-ghost {
@@ -166,11 +182,49 @@ body {
   border-radius: 100px;
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background-size: 150% 150%;
+  animation: gradientShift 4s ease infinite;
 }
 
 .btn-grad:hover {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(224, 48, 192, 0.35), 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(224, 48, 192, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(224, 48, 192, 0.3), 0 0 80px rgba(139, 92, 246, 0.1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
 }
 
 @media (max-width: 700px) {
@@ -194,4 +248,30 @@ body {
     flex-direction: column !important;
     align-items: center !important;
   }
+}
+
+/* Smooth page transitions */
+.App > *:not(nav) {
+  animation: fadeInUp 0.3s ease;
+}
+
+/* Toast animation */
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Link hover effect */
+a {
+  transition: color 0.2s;
+}
+
+/* Better focus outlines */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+
+/* Pill hover */
+.pill {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }

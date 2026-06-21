@@ -64,10 +64,13 @@ const MarqueeStrip: React.FC = () => {
         borderBottom: '1px solid var(--border)',
         background: 'var(--s1)',
         overflow: 'hidden',
-        padding: '11px 0',
+        padding: '13px 0',
         position: 'relative',
       }}
     >
+      {/* Fade edges */}
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 80, background: 'linear-gradient(90deg, var(--s1), transparent)', zIndex: 2, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 80, background: 'linear-gradient(270deg, var(--s1), transparent)', zIndex: 2, pointerEvents: 'none' }} />
       <div
         ref={marqueeRef}
         id="marquee"

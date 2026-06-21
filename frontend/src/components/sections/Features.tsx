@@ -98,26 +98,30 @@ const Features: React.FC = () => {
           For campus life.
         </h2>
       </div>
-      <div className="feat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+      <div className="feat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
         {features.map((feature, idx) => (
-          <div key={idx} className="card" style={{ padding: '24px', position: 'relative' }}>
+          <div key={idx} className="card" style={{
+            padding: '28px', position: 'relative', cursor: 'default',
+            animation: `fadeInUp 0.5s ${0.1 * idx}s ease both`,
+          }}>
             <div
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
+                width: '44px',
+                height: '44px',
+                borderRadius: '14px',
                 background: getBackgroundColor(feature.colorClass),
                 border: `1px solid ${getBorderColor(feature.colorClass)}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px',
-                marginBottom: '16px',
+                fontSize: '20px',
+                marginBottom: '18px',
+                transition: 'transform 0.3s, box-shadow 0.3s',
               }}
             >
               {feature.icon}
             </div>
-            <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '15px', color: 'var(--t1)', marginBottom: '8px' }}>
+            <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '15px', color: 'var(--t1)', marginBottom: '8px', letterSpacing: '-0.01em' }}>
               {feature.title}
             </div>
             <p
@@ -126,22 +130,18 @@ const Features: React.FC = () => {
                 fontSize: '12px',
                 fontWeight: 300,
                 color: 'var(--t2)',
-                lineHeight: 1.7,
+                lineHeight: 1.75,
               }}
             >
               {feature.description}
             </p>
             <div
               style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '2px',
-                background: feature.gradient,
-                borderRadius: 0,
+                position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
+                background: `linear-gradient(90deg, transparent, ${feature.gradient}, transparent)`,
+                opacity: 0.7,
               }}
-            ></div>
+            />
           </div>
         ))}
       </div>

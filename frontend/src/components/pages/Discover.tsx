@@ -360,17 +360,21 @@ function getPhotoUrl(photo: any) {
         </div>
 
         {loading ? (
-          <div style={{ padding: '40px 0', fontFamily: 'var(--f2)', color: 'var(--t2)' }}>Loading discovery feed...</div>
+          <div style={{ padding: '80px 0', textAlign: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--s2)', borderTopColor: 'var(--spark)', margin: '0 auto 16px', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div style={{ fontFamily: 'var(--f2)', color: 'var(--t2)', fontSize: 14 }}>Finding people on your campus...</div>
+          </div>
         ) : error ? (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '20px', fontFamily: 'var(--f2)', color: 'var(--t2)' }}>{error}</div>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '32px', fontFamily: 'var(--f2)', color: 'var(--t2)', textAlign: 'center' }}>{error}</div>
         ) : !profile ? (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '20px', fontFamily: 'var(--f2)', color: 'var(--t2)' }}>
-            No more profiles left in your feed right now.
-            <div style={{ marginTop: '12px' }}>
-              <button type="button" onClick={reloadFeed} style={{ background: 'var(--spark)', border: 'none', color: '#fff', borderRadius: '10px', padding: '10px 16px', cursor: 'pointer', fontFamily: 'var(--f1)', fontWeight: 700 }}>
-                Refresh feed
-              </button>
-            </div>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '22px', padding: '48px 24px', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🌙</div>
+            <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: 18, color: 'var(--t1)', marginBottom: 8 }}>All caught up</div>
+            <div style={{ fontFamily: 'var(--f2)', color: 'var(--t2)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>No more profiles left in your feed right now. Come back later for new faces.</div>
+            <button type="button" onClick={reloadFeed} className="btn-grad" style={{ padding: '12px 28px' }}>
+              Refresh feed
+            </button>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px', alignItems: 'start' }}>
@@ -378,7 +382,7 @@ function getPhotoUrl(photo: any) {
               <div style={{ position: 'relative', marginBottom: '20px' }}>
                 <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%) rotate(3deg)', width: 'calc(100% - 40px)', height: '100%', background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: '24px', zIndex: 1 }} />
                 <div style={{ position: 'absolute', top: '5px', left: '50%', transform: 'translateX(-50%) rotate(-1.5deg)', width: 'calc(100% - 20px)', height: '100%', background: 'var(--card3)', border: '1px solid var(--border)', borderRadius: '24px', zIndex: 2 }} />
-                <div style={{ position: 'relative', zIndex: 3, background: 'var(--card)', border: '1px solid var(--bmd)', borderRadius: '24px', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', zIndex: 3, background: 'var(--card)', border: '1px solid var(--bmd)', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 16px 48px rgba(0,0,0,0.4), 0 0 30px rgba(224,48,192,0.06)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                   <div style={{ position: 'relative', height: primaryCardHeight }}>
                     {profilePhotoUrl ? (
                       <img src={profilePhotoUrl} alt={profile.name} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain', background: '#0f0e22' }} />
@@ -456,15 +460,16 @@ function getPhotoUrl(photo: any) {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
-                <button type="button" onClick={() => swipe('pass')} style={{ width: '54px', height: '54px', borderRadius: '50%', background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--t2)', fontSize: '20px', cursor: 'pointer' }} title="Pass">
+                <button type="button" onClick={() => swipe('pass')} style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--t2)', fontSize: '20px', cursor: 'pointer', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                  onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.borderColor = 'var(--rose)'; e.currentTarget.style.color = 'var(--rose)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--t2)'; }}
+                  title="Pass">
                   ✕
                 </button>
-                {/* Game-related CTA disabled for now.
-                <button type="button" onClick={() => setToast('Send a game from the match page after you match.')} style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--vid)', border: '1px solid rgba(139,92,246,0.25)', color: 'var(--vio)', cursor: 'pointer' }} title="Send a game">
-                  🎮
-                </button>
-                */}
-                <button type="button" onClick={() => swipe('like')} style={{ width: '68px', height: '68px', borderRadius: '50%', background: 'var(--spark)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Like">
+                <button type="button" onClick={() => swipe('like')} style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--spark), var(--vio))', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 4px 20px rgba(224,48,192,0.3)' }}
+                  onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(224,48,192,0.45)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(224,48,192,0.3)'; }}
+                  title="Like">
                   ♥
                 </button>
                 {/* Other optional engagement/game-adjacent controls disabled for now.
@@ -678,7 +683,7 @@ function getPhotoUrl(photo: any) {
       ) : null}
 
       {toast ? (
-        <div style={{ position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)', background: 'var(--card2)', border: '1px solid var(--bmd)', borderRadius: '100px', padding: '9px 18px', fontFamily: 'var(--f3)', fontSize: '10px', color: 'var(--t1)', letterSpacing: '0.07em', zIndex: 120 }}>{toast}</div>
+        <div style={{ position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)', background: 'rgba(19,18,38,0.9)', backdropFilter: 'blur(12px)', border: '1px solid var(--bmd)', borderRadius: '100px', padding: '10px 20px', fontFamily: 'var(--f3)', fontSize: '10px', color: 'var(--t1)', letterSpacing: '0.07em', zIndex: 120, animation: 'toastIn 0.3s ease', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>{toast}</div>
       ) : null}
 
       {profileModalOpen && profile ? (

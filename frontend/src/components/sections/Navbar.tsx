@@ -39,14 +39,17 @@ const Navbar: React.FC = () => {
   return (
     <nav
       style={{
-        position: 'relative',
-        zIndex: 10,
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '18px 32px',
+        padding: '14px 32px',
         borderBottom: '1px solid var(--border)',
-        background: 'rgba(7, 7, 15, 0.85)',
+        background: 'rgba(7, 7, 15, 0.72)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       }}
     >
       <div

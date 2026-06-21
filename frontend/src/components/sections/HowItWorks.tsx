@@ -69,16 +69,21 @@ const HowItWorks: React.FC = () => {
           Three steps to your match.
         </h2>
       </div>
-      <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+      <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', position: 'relative' }}>
+        {/* Connecting line */}
+        <div className="desktop-only" style={{
+          position: 'absolute', top: '26px', left: 'calc(16.67% + 26px)', right: 'calc(16.67% + 26px)',
+          height: '1px', background: 'linear-gradient(90deg, var(--spark), var(--vio), var(--rose))', opacity: 0.25,
+        }} />
         {steps.map((step, idx) => (
-          <div key={idx} style={{ textAlign: 'center', padding: '0 16px' }}>
+          <div key={idx} style={{ textAlign: 'center', padding: '0 16px', animation: `fadeInUp 0.5s ${0.15 * idx}s ease both` }}>
             <div
               style={{
                 width: '52px',
                 height: '52px',
                 borderRadius: '50%',
                 background: getBackgroundColor(step.colorClass),
-                border: `1px solid ${getBorderColor(step.colorClass)}`,
+                border: `2px solid ${getBorderColor(step.colorClass)}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -86,7 +91,10 @@ const HowItWorks: React.FC = () => {
                 fontWeight: 800,
                 fontSize: '18px',
                 color: step.gradient,
-                margin: '0 auto 16px',
+                margin: '0 auto 18px',
+                position: 'relative',
+                zIndex: 1,
+                boxShadow: `0 0 20px ${getBorderColor(step.colorClass)}`,
               }}
             >
               {step.number}
@@ -100,7 +108,7 @@ const HowItWorks: React.FC = () => {
                 fontSize: '12px',
                 fontWeight: 300,
                 color: 'var(--t2)',
-                lineHeight: 1.7,
+                lineHeight: 1.75,
               }}
             >
               {step.description}

@@ -23,7 +23,7 @@
 
 .inp:focus {
   border-color: var(--spark);
-  box-shadow: 0 0 0 3px rgba(224, 48, 192, 0.1);
+  box-shadow: 0 0 0 3px rgba(224, 48, 192, 0.12), 0 0 20px rgba(224, 48, 192, 0.06);
 }
 
 .inp::placeholder {
@@ -262,7 +262,7 @@
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -276,9 +276,19 @@
     opacity: 1;
   }
   50% {
-    transform: scale(1.1);
-    opacity: 0.8;
+    transform: scale(1.08);
+    opacity: 0.85;
   }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Responsive Design */
