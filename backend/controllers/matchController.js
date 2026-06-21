@@ -1,7 +1,8 @@
 const { Match, CompatibilityTest, Message, Profile, Notification } = require('../models');
 
 async function loadProfileMap(userIds) {
-  const profiles = await Profile.find({ userId: { $in: userIds } })
+  const ids = userIds.map(id => (typeof id === 'object' && id._id) ? id._id : id);
+  const profiles = await Profile.find({ userId: { $in: ids } })
     .select('userId name photos lastActive')
     .lean();
 
@@ -184,20 +185,35 @@ exports.getMessages = async (req, res) => {
       }
     }
 
-    const messages = await Message.find(query)
-      .populate('senderId', 'name')
+    const rawMessages = await Message.find(query)
       .sort({ sentAt: -1 })
       .limit(parseInt(limit) + 1)
-      .select('_id content mediaUrl senderId sentAt');
+      .select('_id content mediaUrl senderId sentAt')
+      .lean();
 
     // Check if there are more messages
-    const hasMore = messages.length > limit;
+    const hasMore = rawMessages.length > limit;
     if (hasMore) {
-      messages.pop();
+      rawMessages.pop();
     }
 
     // Reverse to get chronological order
-    messages.reverse();
+    rawMessages.reverse();
+
+    // Resolve sender names from Profile collection
+    const senderIds = [...new Set(rawMessages.map(m => m.senderId.toString()))];
+    const senderProfiles = await Profile.find({ userId: { $in: senderIds } })
+      .select('userId name')
+      .lean();
+    const senderMap = new Map(senderProfiles.map(p => [p.userId.toString(), p.name]));
+
+    const messages = rawMessages.map(m => ({
+      ...m,
+      senderId: {
+        _id: m.senderId,
+        name: senderMap.get(m.senderId.toString()) || 'User'
+      }
+    }));
 
     res.json({
       messages,
@@ -221,13 +237,6 @@ exports.initializeChatSocket = (io) => {
       try {
         const { matchId, content, mediaUrl } = data;
         const userId = socket.userId; // Set by auth middleware
-
-        // Check if compatibility test completed
-        const compatTest = await CompatibilityTest.findOne({ matchId });
-        if (!compatTest || !compatTest.completed) {
-          socket.emit('error', { message: 'Compatibility test not completed' });
-          return;
-        }
 
         const message = new Message({
           matchId,

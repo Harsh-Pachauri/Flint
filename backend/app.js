@@ -50,8 +50,11 @@ app.use((req, res) => {
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
+    origin: function (origin, callback) {
+      callback(null, true);
+    },
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 

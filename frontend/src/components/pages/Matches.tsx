@@ -97,7 +97,7 @@ function Matches() {
   const [loadingConversation, setLoadingConversation] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
-  const [sending] = useState(false);
+  const [sending, setSending] = useState(false);
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#/matches');
   const [showMatchesMobile, setShowMatchesMobile] = useState(false);
   const socketRef = useRef<Socket | null>(null);
@@ -226,6 +226,19 @@ function Matches() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
 
+  function sendMessage() {
+    const text = draft.trim();
+    if (!text || !activeMatchId || !socketRef.current) return;
+    setSending(true);
+    socketRef.current.emit('message:send', {
+      matchId: activeMatchId,
+      content: text,
+    });
+    setDraft('');
+    setSending(false);
+  }
+
+  const currentUserId = localStorage.getItem('userId') || '';
   const activeMatch = matches.find((item) => item.matchId === activeMatchId) || null;
   const fallbackOtherUser = getDisplayName(matchDetail?.otherUser?.name || activeMatch?.otherUser?.name);
   const activeMatchAvatar = getPhotoUrl(matchDetail?.otherUser?.photos || activeMatch?.otherUser?.photos);
@@ -343,8 +356,10 @@ function Matches() {
                             </div>
                           ) : (
                             messages.map((message, index) => {
-                              const senderName = typeof message.senderId === 'object' ? message.senderId?.name : '';
-                              const isMe = senderName === 'You';
+                              const senderObj = typeof message.senderId === 'object' ? message.senderId : null;
+                              const senderId = senderObj?._id || (typeof message.senderId === 'string' ? message.senderId : '');
+                              const senderName = senderObj?.name || '';
+                              const isMe = senderId === currentUserId;
                               return (
                                 <div key={message._id || `${index}-${message.sentAt}`} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                                   <div style={{ maxWidth: '78%', background: isMe ? 'var(--spark)' : 'var(--card2)', border: '1px solid var(--border)', color: isMe ? '#fff' : 'var(--t1)', borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '10px 14px' }}>
@@ -366,6 +381,12 @@ function Matches() {
                               rows={2}
                               value={draft}
                               onChange={(event) => setDraft(event.target.value)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' && !event.shiftKey) {
+                                  event.preventDefault();
+                                  sendMessage();
+                                }
+                              }}
                               placeholder="Say something..."
                               style={{ flex: 1, resize: 'none', background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--t1)', borderRadius: '12px', padding: '11px 14px', fontFamily: 'var(--f2)', fontSize: '13px', lineHeight: 1.65, outline: 'none' }}
                             />

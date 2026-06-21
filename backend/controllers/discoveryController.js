@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { Profile, Swipe, College, Match, Notification } = require('../models');
 
 // Get discovery feed - paginated with random filtering
@@ -16,21 +17,24 @@ exports.getFeed = async (req, res) => {
       return res.status(404).json({ error: 'User profile not found' });
     }
 
-    // Get IDs of already-swiped users
+    // Get IDs of already-swiped users (as ObjectIds for aggregation)
     const swipedUsers = await Swipe.find({ fromUserId: userId }).select('toUserId');
-    const swipedUserIds = swipedUsers.map(s => s.toUserId.toString());
+    const swipedUserIds = swipedUsers.map(s => s.toUserId);
 
-    // Get IDs of already matched users
+    // Get IDs of already matched users (as ObjectIds for aggregation)
     const matchedDocs = await Match.find({ userIds: userId, status: 'active' }).select('userIds');
     const matchedUserIds = matchedDocs
-      .flatMap(m => m.userIds.map(u => u.toString()))
-      .filter(id => id !== userId);
+      .flatMap(m => m.userIds)
+      .filter(id => id.toString() !== userId);
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const excludeIds = [...swipedUserIds, ...matchedUserIds, userObjectId];
 
     // Build aggregation pipeline for random order with filtering
     let pipeline = [
       {
         $match: {
-          userId: { $ne: userId, $nin: [...swipedUserIds, ...matchedUserIds] },
+          userId: { $nin: excludeIds },
           gender: userProfile.genderPreference !== 'both' ? userProfile.genderPreference : { $exists: true }
         }
       }
@@ -91,7 +95,7 @@ exports.getFeed = async (req, res) => {
     const countPipeline = [
       {
         $match: {
-          userId: { $ne: userId, $nin: [...swipedUserIds, ...matchedUserIds] },
+          userId: { $nin: excludeIds },
           gender: userProfile.genderPreference !== 'both' ? userProfile.genderPreference : { $exists: true }
         }
       },

@@ -140,7 +140,7 @@ exports.logout = async (req, res) => {
     const userId = req.user.userId;
 
     // Clear FCM token from user
-    await User.findByIdAndUpdate(userId, { fcmToken: null });-
+    await User.findByIdAndUpdate(userId, { fcmToken: null });
 
     // In production, add refreshToken to blacklist (Redis)
     // For now, we'll just respond with success
