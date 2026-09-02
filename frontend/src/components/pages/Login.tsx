@@ -15,7 +15,7 @@ const Login: React.FC = () => {
     setMessage(null);
     try {
       const res = await postJSON('/api/auth/login', { email, password });
-      saveAuthTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken, userId: res.userId });
+      saveAuthTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken, userId: res.userId, role: res?.user?.role });
       setMessage('Welcome back! Redirecting...');
       setMessageType('success');
       const onboardingComplete = res?.user?.onboardingComplete === true || res?.onboardingComplete === true;
@@ -81,7 +81,12 @@ const Login: React.FC = () => {
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.07em', marginBottom: 8 }}>PASSWORD</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                <label style={{ display: 'block', fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.07em' }}>PASSWORD</label>
+                <a href="#/forgot-password" style={{ fontFamily: 'var(--f2)', fontSize: 11, color: 'var(--spark)', textDecoration: 'none' }}>
+                  Forgot password?
+                </a>
+              </div>
               <div style={{ position: 'relative' }}>
                 <input
                   value={password}

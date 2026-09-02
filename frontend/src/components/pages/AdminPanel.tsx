@@ -33,13 +33,17 @@ function AdminPanel() {
       } else if (activeStatus === 'approved') {
         data = await getJSON('/api/confessions?page=1&limit=50&sort=trending');
       } else {
-        // Load both pending and approved
-        const [pending, approved] = await Promise.all([
+        // Load pending, approved, AND rejected — an "All" tab that silently
+        // dropped rejected confessions gave moderators no way to review past
+        // rejections. The status=rejected override only takes effect for
+        // admins (enforced server-side in confessionController.getConfessions).
+        const [pending, approved, rejected] = await Promise.all([
           getJSON('/api/confessions/pending'),
-          getJSON('/api/confessions?page=1&limit=50&sort=trending')
+          getJSON('/api/confessions?page=1&limit=50&sort=trending'),
+          getJSON('/api/confessions?page=1&limit=50&status=rejected')
         ]);
         data = {
-          confessions: [...pending.confessions, ...approved.confessions]
+          confessions: [...pending.confessions, ...approved.confessions, ...rejected.confessions]
         };
       }
       setConfessions(data.confessions || []);
@@ -122,7 +126,7 @@ function AdminPanel() {
             style={{
               padding: '12px 20px',
               background: activeStatus === status ? 'var(--spark)' : 'transparent',
-              color: activeStatus === status ? 'white' : 'var(--s1)',
+              color: activeStatus === status ? 'white' : 'var(--t3)',
               border: 'none',
               cursor: 'pointer',
               fontSize: '14px',
@@ -140,14 +144,14 @@ function AdminPanel() {
 
       {/* Loading */}
       {loading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--s1)' }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--t2)' }}>
           Loading confessions...
         </div>
       )}
 
       {/* Confessions List */}
       {!loading && confessions.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--s1)' }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--t2)' }}>
           No confessions to moderate
         </div>
       )}
@@ -184,13 +188,13 @@ function AdminPanel() {
 
               {/* Header */}
               <div style={{ marginBottom: '12px', paddingRight: '100px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--s1)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--t3)', marginBottom: '4px' }}>
                   {confession.isAnonymous ? '🔒 Anonymous' : '👤 Named'} • {new Date(confession.createdAt).toLocaleDateString()}
                 </div>
               </div>
 
               {/* Text */}
-              <div style={{ fontSize: '14px', lineHeight: '1.6', marginBottom: '12px', color: 'var(--s0)' }}>
+              <div style={{ fontSize: '14px', lineHeight: '1.6', marginBottom: '12px', color: 'var(--t1)' }}>
                 {confession.text}
               </div>
 
@@ -215,7 +219,7 @@ function AdminPanel() {
               )}
 
               {/* Stats */}
-              <div style={{ fontSize: '12px', color: 'var(--s1)', marginBottom: '12px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--t3)', marginBottom: '12px' }}>
                 ❤️ {confession.reactionCount} reactions • 💬 {confession.commentsCount} comments
               </div>
 

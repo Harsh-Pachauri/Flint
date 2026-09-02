@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../../styles/onboarding.css';
-import { postJSON, API_BASE, getAuthToken, setOnboardingCompleteState, clearAuthTokens } from '../../utils/api';
+import { postJSON, getJSON, API_BASE, getAuthToken, setOnboardingCompleteState, clearAuthTokens } from '../../utils/api';
 
 // Mapping functions to transform frontend data to backend payload
 function mapGender(gender: string): string {
@@ -32,6 +32,7 @@ function mapDatingIntent(intent: string): string {
 
 interface OnboardingData {
   college?: string;
+  collegeId?: string;
   collegeEmail?: string;
   verificationCode?: string;
   firstName?: string;
@@ -48,11 +49,34 @@ interface OnboardingData {
   vibe?: Record<string, number>;
   datingType?: string;
   genderPreference?: string;
+  coordinates?: [number, number];
 }
 
 const Onboarding: React.FC = () => {
   const [curScreen, setCurScreen] = useState(0);
   const [data, setData] = useState<OnboardingData>({});
+
+  // Best-effort, non-blocking location capture: uses the browser's native
+  // permission prompt (which the user can freely dismiss), stores real
+  // coordinates only if granted, and silently continues onboarding either
+  // way if denied/unavailable/unsupported. Never falls back to a fake
+  // coordinate — if this doesn't succeed, `data.coordinates` simply stays
+  // unset and the profile is created with no location at all.
+  useEffect(() => {
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setData((prev) => ({
+          ...prev,
+          coordinates: [position.coords.longitude, position.coords.latitude]
+        }));
+      },
+      () => {
+        // Permission denied, timed out, or position unavailable — no-op.
+      },
+      { timeout: 8000 }
+    );
+  }, []);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
 
@@ -249,11 +273,41 @@ const Screen0: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   );
 };
 
+type CollegeResult = { _id: string; name: string; city: string; country: string };
+
 const Screen1: React.FC<{ onNext: () => void; onBack: () => void; onDataChange: (key: string, value: any) => void }> = ({ onNext, onBack, onDataChange }) => {
-  const [college, setCollege] = useState('');
+  const [collegeQuery, setCollegeQuery] = useState('');
+  const [collegeResults, setCollegeResults] = useState<CollegeResult[]>([]);
+  const [searchingColleges, setSearchingColleges] = useState(false);
+  const [selectedCollege, setSelectedCollege] = useState<CollegeResult | null>(null);
   const [collegeEmail, setCollegeEmail] = useState('');
   const [showVerify, setShowVerify] = useState(false);
   const [code, setCode] = useState('');
+
+  // Debounced live search against the real College collection — the
+  // selected result's actual _id gets persisted, never a hardcoded string.
+  useEffect(() => {
+    if (selectedCollege || collegeQuery.trim().length < 2) {
+      setCollegeResults([]);
+      return;
+    }
+    let alive = true;
+    setSearchingColleges(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await getJSON(`/api/colleges/search?query=${encodeURIComponent(collegeQuery.trim())}`);
+        if (alive) setCollegeResults(res.colleges || []);
+      } catch (e) {
+        if (alive) setCollegeResults([]);
+      } finally {
+        if (alive) setSearchingColleges(false);
+      }
+    }, 300);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+  }, [collegeQuery, selectedCollege]);
 
   const handleSendCode = () => {
     if (!collegeEmail) return;
@@ -263,7 +317,10 @@ const Screen1: React.FC<{ onNext: () => void; onBack: () => void; onDataChange: 
   const handleCodeChange = (val: string) => {
     setCode(val);
     if (val.length === 6) {
-      onDataChange('college', college);
+      if (selectedCollege) {
+        onDataChange('college', selectedCollege.name);
+        onDataChange('collegeId', selectedCollege._id);
+      }
       onDataChange('collegeEmail', collegeEmail);
       onDataChange('verificationCode', val);
       setTimeout(onNext, 300);
@@ -281,15 +338,49 @@ const Screen1: React.FC<{ onNext: () => void; onBack: () => void; onDataChange: 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
         <div>
           <div style={{ fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.08em', marginBottom: 6 }}>YOUR COLLEGE</div>
-          <select className="inp" value={college} onChange={(e) => setCollege(e.target.value)}>
-            <option value="">Select your college...</option>
-            <option value="vit">VIT Vellore</option>
-            <option value="bits">BITS Pilani</option>
-            <option value="nit">NIT Trichy</option>
-            <option value="iitb">IIT Bombay</option>
-            <option value="iitd">IIT Delhi</option>
-            <option value="manipal">Manipal University</option>
-          </select>
+          {selectedCollege ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: 'var(--s2)', border: '1.5px solid rgba(224,48,192,0.35)', borderRadius: 12, padding: '12px 14px' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--f2)', fontSize: 13, color: 'var(--t1)', fontWeight: 500 }}>{selectedCollege.name}</div>
+                <div style={{ fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)' }}>{selectedCollege.city}, {selectedCollege.country}</div>
+              </div>
+              <button type="button" className="btn-ghost" style={{ padding: '6px 12px', fontSize: 11 }} onClick={() => { setSelectedCollege(null); setCollegeQuery(''); }}>
+                Change
+              </button>
+            </div>
+          ) : (
+            <>
+              <input
+                className="inp"
+                type="text"
+                placeholder="Search for your college..."
+                value={collegeQuery}
+                onChange={(e) => setCollegeQuery(e.target.value)}
+              />
+              {searchingColleges && (
+                <div style={{ fontFamily: 'var(--f3)', fontSize: 10, color: 'var(--t3)', marginTop: 6 }}>Searching...</div>
+              )}
+              {!searchingColleges && collegeResults.length > 0 && (
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                  {collegeResults.map((c) => (
+                    <div
+                      key={c._id}
+                      onClick={() => { setSelectedCollege(c); setCollegeResults([]); }}
+                      style={{ cursor: 'pointer', padding: '10px 12px', background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: 10 }}
+                    >
+                      <div style={{ fontFamily: 'var(--f2)', fontSize: 12, color: 'var(--t1)' }}>{c.name}</div>
+                      <div style={{ fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)' }}>{c.city}, {c.country}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!searchingColleges && collegeQuery.trim().length >= 2 && collegeResults.length === 0 && (
+                <div style={{ fontFamily: 'var(--f3)', fontSize: 10, color: 'var(--t3)', marginTop: 6 }}>
+                  Can't find your college yet — you can continue without selecting one for now.
+                </div>
+              )}
+            </>
+          )}
         </div>
         <div>
           <div style={{ fontFamily: 'var(--f3)', fontSize: 9, color: 'var(--t3)', letterSpacing: '0.08em', marginBottom: 6 }}>COLLEGE EMAIL</div>
@@ -345,7 +436,22 @@ const Screen2: React.FC<{ onNext: () => void; onBack: () => void; onDataChange: 
   onDataChange,
   data,
 }) => {
-  const [firstName, setFirstName] = useState(data.firstName || '');
+  // Pre-fill from the name entered at registration (Register.tsx), if any,
+  // so the user isn't asked to type it twice. Cleared once read so it
+  // doesn't stick around/get reused across a different account later.
+  const [firstName, setFirstName] = useState(() => {
+    if (data.firstName) return data.firstName;
+    try {
+      const pending = localStorage.getItem('pendingName');
+      if (pending) {
+        localStorage.removeItem('pendingName');
+        return pending;
+      }
+    } catch (e) {
+      // localStorage unavailable — ignore, field just starts empty
+    }
+    return '';
+  });
   const [age, setAge] = useState(data.age?.toString() || '');
   const [year, setYear] = useState(data.year || '');
   const [department, setDepartment] = useState(data.department || '');
@@ -546,7 +652,7 @@ const Screen3: React.FC<{ onNext: () => void; onBack: () => void; onDataChange: 
       <div className="ey" style={{ marginBottom: 14 }}>Step 3 of 7</div>
       <h2 style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.04em', color: 'var(--t1)', marginBottom: 8 }}>Show up.</h2>
       <p style={{ fontFamily: 'var(--f2)', fontSize: 13, fontWeight: 300, color: 'var(--t2)', lineHeight: 1.75, marginBottom: 24 }}>
-        Add at least 2 photos. Real ones — your campus crew already knows what you look like anyway.
+        Add at least 1 photo. Real ones — your campus crew already knows what you look like anyway.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
@@ -851,10 +957,21 @@ const Screen6: React.FC<{ onNext: () => void; onBack: () => void; onDataChange: 
   );
 };
 
+function photoFileKey(file: File) {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
 const Screen7: React.FC<{ onBack: () => void; allData?: OnboardingData; selectedInterests?: string[]; selectedTraits?: string[]; sliders?: number[] }> = ({ onBack, allData, selectedInterests = [], selectedTraits = [], sliders = [30, 65, 55] }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState('');
+  // Tracks which photo files already uploaded successfully, keyed by a
+  // stable fingerprint. Survives across retries of this same submission
+  // (the component doesn't unmount between a failed attempt and the user
+  // clicking the button again), so a retry after a partial failure only
+  // re-attempts the files that actually failed — it doesn't re-upload ones
+  // that already succeeded.
+  const uploadedFileKeysRef = useRef<Set<string>>(new Set());
 
   const handleStartJourney = async () => {
     if (!allData?.firstName || !allData?.age || !allData?.gender || !allData?.datingType || !allData?.genderPreference) {
@@ -868,7 +985,7 @@ const Screen7: React.FC<{ onBack: () => void; allData?: OnboardingData; selected
 
     try {
       // Transform frontend data to backend payload
-      const payload = {
+      const payload: Record<string, any> = {
         name: allData.firstName,
         age: Number(allData.age),
         gender: mapGender(allData.gender),
@@ -886,6 +1003,12 @@ const Screen7: React.FC<{ onBack: () => void; allData?: OnboardingData; selected
         },
         vibewords: selectedTraits
       };
+      if (allData.collegeId) {
+        payload.collegeId = allData.collegeId;
+      }
+      if (Array.isArray(allData.coordinates)) {
+        payload.location = { coordinates: allData.coordinates };
+      }
 
       let profileReady = false;
       try {
@@ -905,11 +1028,13 @@ const Screen7: React.FC<{ onBack: () => void; allData?: OnboardingData; selected
       }
 
       const selectedFiles = Array.isArray(allData?.photoFiles) ? allData.photoFiles : [];
-      if (selectedFiles.length > 0) {
+      const filesStillNeeded = selectedFiles.filter((file) => !uploadedFileKeysRef.current.has(photoFileKey(file)));
+
+      if (filesStillNeeded.length > 0) {
         setSubmitMessage('Uploading photos...');
         const token = getAuthToken();
 
-        for (const file of selectedFiles) {
+        for (const file of filesStillNeeded) {
           const fd = new FormData();
           fd.append('photos', file);
 
@@ -929,6 +1054,9 @@ const Screen7: React.FC<{ onBack: () => void; allData?: OnboardingData; selected
           if (!newUrl) {
             throw new Error('Photo upload succeeded but no URL was returned');
           }
+
+          // Only mark this file as done once it has actually succeeded.
+          uploadedFileKeysRef.current.add(photoFileKey(file));
         }
       }
 

@@ -4,6 +4,7 @@ import Homepage from './components/Homepage';
 import Navbar from './components/sections/Navbar';
 import Register from './components/pages/Register';
 import Login from './components/pages/Login';
+import ForgotPassword from './components/pages/ForgotPassword';
 import Onboarding from './components/pages/Onboarding';
 import CampusPulse from './components/pages/CampusPulse';
 import Discover from './components/pages/Discover';
@@ -11,7 +12,7 @@ import Profile from './components/pages/Profile';
 import PublicProfile from './components/pages/PublicProfile';
 import Matches from './components/pages/Matches';
 import AdminPanel from './components/pages/AdminPanel';
-import { isOnboardingCompleteState } from './utils/api';
+import { isOnboardingCompleteState, isAdminUser } from './utils/api';
 
 function App() {
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
@@ -52,7 +53,15 @@ function App() {
       return;
     }
 
-    if (isAuthenticated && onboardingComplete && (currentRoute === '#/login' || currentRoute === '#/register' || currentRoute === '#/onboarding')) {
+    if (isAuthenticated && onboardingComplete && (currentRoute === '#/login' || currentRoute === '#/register' || currentRoute === '#/forgot-password' || currentRoute === '#/onboarding')) {
+      window.location.hash = '#/';
+      return;
+    }
+
+    // Backend authorization remains the real security boundary (every admin
+    // endpoint checks it independently) — this is purely a UX guard so a
+    // non-admin never sees the admin interface render at all.
+    if (currentRoute === '#/admin' && !isAdminUser()) {
       window.location.hash = '#/';
     }
   }, [route, authStateTick]);
@@ -60,13 +69,14 @@ function App() {
   let content = <Homepage />;
   if (route === '#/register') content = <Register />;
   if (route === '#/login') content = <Login />;
+  if (route === '#/forgot-password') content = <ForgotPassword />;
   if (route === '#/onboarding') content = <Onboarding />;
   if (route.startsWith('#/campus-pulse')) content = <CampusPulse />;
   if (route.startsWith('#/discover')) content = <Discover />;
   if (route.startsWith('#/matches')) content = <Matches />;
   if (route === '#/profile') content = <Profile />;
   if (route.startsWith('#/profile/') && route.split('/').length >= 3) content = <PublicProfile />;
-  if (route === '#/admin') content = <AdminPanel />;
+  if (route === '#/admin') content = isAdminUser() ? <AdminPanel /> : <Homepage />;
 
   return (
     <div className="App">

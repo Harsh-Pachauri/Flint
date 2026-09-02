@@ -101,6 +101,7 @@ function Matches() {
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#/matches');
   const [showMatchesMobile, setShowMatchesMobile] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const currentRoomRef = useRef<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const activeMatchId = useMemo(() => parseMatchId(currentHash), [currentHash]);
@@ -181,9 +182,12 @@ function Matches() {
     };
   }, [activeMatchId]);
 
+  // One persistent socket connection for the lifetime of this page — created
+  // once on mount, disconnected only on unmount. Switching between matches
+  // just moves rooms (leave:chat / join:chat) instead of tearing down and
+  // re-establishing the whole connection (and its handshake/auth) on every
+  // click, which also meant a brief connectivity gap on every switch.
   useEffect(() => {
-    if (!activeMatchId) return;
-
     const token = getAuthToken();
     if (!token) {
       setToast('You need to be logged in to open chat');
@@ -197,10 +201,20 @@ function Matches() {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      socket.emit('join:chat', activeMatchId);
+      // (Re)join whichever room is current — covers both the initial join
+      // and rejoining after a reconnect.
+      if (currentRoomRef.current) {
+        socket.emit('join:chat', currentRoomRef.current);
+      }
     });
 
     socket.on('message:received', (payload: any) => {
+      // Guard against a message for a room we've since left arriving during
+      // the brief window of a room switch — only accept messages for the
+      // conversation currently on screen.
+      if (payload?.matchId && payload.matchId !== currentRoomRef.current) {
+        return;
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -220,6 +234,25 @@ function Matches() {
       socket.disconnect();
       socketRef.current = null;
     };
+  }, []);
+
+  // Move rooms when the selected match changes, without touching the
+  // underlying connection.
+  useEffect(() => {
+    const socket = socketRef.current;
+    const previousRoom = currentRoomRef.current;
+
+    if (previousRoom && previousRoom !== activeMatchId && socket) {
+      socket.emit('leave:chat', previousRoom);
+    }
+
+    currentRoomRef.current = activeMatchId || null;
+
+    if (activeMatchId && socket && socket.connected) {
+      socket.emit('join:chat', activeMatchId);
+    }
+    // If the socket isn't connected yet, the 'connect' handler above joins
+    // currentRoomRef.current once it comes up.
   }, [activeMatchId]);
 
   useEffect(() => {

@@ -9,7 +9,12 @@ export function getAuthTokens() {
     accessToken: localStorage.getItem('accessToken'),
     refreshToken: localStorage.getItem('refreshToken'),
     userId: localStorage.getItem('userId'),
+    role: localStorage.getItem('role'),
   };
+}
+
+export function isAdminUser(): boolean {
+  return localStorage.getItem('role') === 'admin';
 }
 
 export async function postJSON(path: string, body: any) {
@@ -113,15 +118,17 @@ export function clearAuthTokens() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('userId');
+  localStorage.removeItem('role');
   localStorage.removeItem('onboardingComplete');
   localStorage.removeItem('onboarded');
   window.dispatchEvent(new Event('auth-changed'));
 }
 
-export function saveAuthTokens(payload: { accessToken?: string; refreshToken?: string; userId?: string }) {
+export function saveAuthTokens(payload: { accessToken?: string; refreshToken?: string; userId?: string; role?: string }) {
   if (payload.accessToken) localStorage.setItem('accessToken', payload.accessToken);
   if (payload.refreshToken) localStorage.setItem('refreshToken', payload.refreshToken);
   if (payload.userId) localStorage.setItem('userId', payload.userId);
+  if (payload.role) localStorage.setItem('role', payload.role);
   window.dispatchEvent(new Event('auth-changed'));
 }
 

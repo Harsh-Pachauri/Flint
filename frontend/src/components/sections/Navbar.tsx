@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 
 const Navbar: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const syncAuthState = () => {
       const token = localStorage.getItem('accessToken');
       setIsAuthenticated(!!token);
+      setIsAdmin(localStorage.getItem('role') === 'admin');
     };
 
     // Check if user has access token
@@ -29,10 +31,12 @@ const Navbar: React.FC = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userId');
+    localStorage.removeItem('role');
     localStorage.removeItem('onboardingComplete');
     localStorage.removeItem('onboarded');
     window.dispatchEvent(new Event('auth-changed'));
     setIsAuthenticated(false);
+    setIsAdmin(false);
     window.location.hash = '#/';
   };
 
@@ -99,6 +103,11 @@ const Navbar: React.FC = () => {
             <span style={{ fontFamily: 'var(--f2)', fontSize: '13px', color: 'var(--t2)', cursor: 'pointer' }} onClick={() => (window.location.hash = '#/matches')}>
               Matches
             </span>
+            {isAdmin && (
+              <span style={{ fontFamily: 'var(--f2)', fontSize: '13px', color: 'var(--spark)', cursor: 'pointer' }} onClick={() => (window.location.hash = '#/admin')}>
+                Admin
+              </span>
+            )}
           </>
         )}
       </div>

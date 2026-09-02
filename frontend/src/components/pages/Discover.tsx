@@ -180,9 +180,10 @@ function getPhotoUrl(photo: any) {
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const initials = profile.name
+    const initials = (profile.name || '')
       .split(' ')
       .map((word) => word[0])
+      .filter(Boolean)
       .slice(0, 2)
       .join('')
       .toUpperCase();
@@ -334,17 +335,6 @@ function getPhotoUrl(photo: any) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '100px', padding: '7px 14px', flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--spark)', letterSpacing: '0.07em' }}>DISCOVER</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--s2)', border: '1px solid var(--bmd)', borderRadius: '100px', padding: '7px 14px', cursor: 'pointer', flexShrink: 0 }}>
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M4 8h8M7 12h2" stroke="var(--spark)" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--spark)', letterSpacing: '0.07em' }}>FILTERS</span>
-          </div>
-          {['ECE ONLY', 'SHARED EVENTS', '5+ MUTUALS ✓', 'SAME YEAR', 'ACTIVE TODAY'].map((label, index) => (
-            <div key={label} style={{ fontFamily: 'var(--f3)', fontSize: '9px', padding: '7px 13px', borderRadius: '100px', border: index === 2 ? '1px solid rgba(224,48,192,0.3)' : '1px solid var(--border)', color: index === 2 ? 'var(--spark)' : 'var(--t3)', background: index === 2 ? 'var(--spd)' : 'transparent', cursor: 'pointer', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-              {label}
-            </div>
-          ))}
           <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button type="button" onClick={() => setDrawerOpen(true)} style={{ position: 'relative', width: '30px', height: '30px', background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Incoming swipes">
               <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
@@ -352,10 +342,6 @@ function getPhotoUrl(photo: any) {
               </svg>
               <div style={{ position: 'absolute', top: '-1px', right: '-1px', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--spark)', border: '1.5px solid var(--void)' }} />
             </button>
-            <span style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--t3)', letterSpacing: '0.06em' }}>24 LEFT TODAY</span>
-            <div style={{ width: '60px', height: '4px', background: 'var(--s2)', borderRadius: '100px', overflow: 'hidden' }}>
-              <div style={{ width: '45%', height: '100%', background: 'var(--spark)', borderRadius: '100px' }} />
-            </div>
           </div>
         </div>
 
@@ -574,40 +560,13 @@ function getPhotoUrl(photo: any) {
                   {profiles.slice(currentIndex, currentIndex + 4).map((item) => (
                     <div key={item._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setToast(`Previewing ${item.name}`)}>
                       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--spark),var(--vio))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '11px', flexShrink: 0 }}>
-                        {item.name.split(' ').map((word) => word[0]).slice(0, 2).join('')}
+                        {(item.name || '').split(' ').map((word) => word[0]).filter(Boolean).slice(0, 2).join('')}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: 'var(--f2)', fontSize: '12px', fontWeight: 500, color: 'var(--t1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
                         <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--t3)' }}>{item.depart || 'Unknown department'}</div>
                       </div>
                       <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '12px', color: 'var(--t3)' }}>{item.aiAssessmentScore || 0}%</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '16px' }}>
-                <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--spark)', letterSpacing: '0.12em', marginBottom: '12px' }}>ACTIVE NOW</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ background: 'var(--s2)', borderRadius: '10px', padding: '10px', textAlign: 'center', border: '1px solid var(--border)' }}>
-                    <div style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: '20px', color: 'var(--spark)' }}>247</div>
-                    <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)' }}>ONLINE NOW</div>
-                  </div>
-                  <div style={{ background: 'var(--s2)', borderRadius: '10px', padding: '10px', textAlign: 'center', border: '1px solid var(--border)' }}>
-                    <div style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: '20px', color: 'var(--vio)' }}>34</div>
-                    <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)' }}>NEW TODAY</div>
-                  </div>
-                </div>
-                <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--t3)', letterSpacing: '0.06em', marginBottom: '7px' }}>HOT SPOTS</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  {['Main Library', 'NST Café', 'ECE Block'].map((spot, index) => (
-                    <div key={spot} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'var(--f2)', fontSize: '11px', color: 'var(--t2)' }}>{spot}</span>
-                      <div style={{ display: 'flex', gap: '3px' }}>
-                        {Array.from({ length: 3 }).map((_, dotIndex) => (
-                          <div key={dotIndex} style={{ width: '6px', height: '6px', borderRadius: '50%', background: index === 0 || dotIndex < 2 ? 'var(--spark)' : index === 1 ? 'var(--vio)' : 'var(--rose)' }} />
-                        ))}
-                      </div>
                     </div>
                   ))}
                 </div>

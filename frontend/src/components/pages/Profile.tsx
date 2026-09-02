@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { API_BASE, deleteJSON, getAuthToken, getAuthTokens, postJSON, putJSON } from '../../utils/api';
+import { API_BASE, deleteJSON, getAuthToken, getAuthTokens, getJSON, postJSON, putJSON } from '../../utils/api';
 import '../../styles/profile.css';
 
 interface PersonalityData {
@@ -50,7 +50,7 @@ interface UploadItem {
   error?: string;
 }
 
-function animateBars(matchBarRef: React.RefObject<HTMLDivElement>) {
+function animateBars(matchBarRef: React.RefObject<HTMLDivElement | null>) {
   if (matchBarRef.current) {
     matchBarRef.current.style.width = '75%';
   }
@@ -98,21 +98,10 @@ const Profile: React.FC = () => {
         return;
       }
 
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      };
-
-      const res = await fetch(`${API_BASE}/api/profile/me`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch profile: ${res.status}`);
-      }
-
-      const data: ApiResponse = await res.json();
+      // Uses the shared api.ts wrapper (not a raw fetch) so an expired
+      // access token is transparently refreshed and retried, same as every
+      // other authenticated call in the app.
+      const data: ApiResponse = await getJSON('/api/profile/me');
       setProfile(data.profile);
 
       // Trigger animations after data loads

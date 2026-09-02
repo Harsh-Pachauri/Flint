@@ -82,7 +82,7 @@ function CampusPulse() {
   const [pollResultsById, setPollResultsById] = useState<Record<string, { totalVotes: number; results: PollResult[] }>>({});
 
   // Trending tags to show in modal
-  const allTags = ['#CrushAlert', '#ExamSeason', '#MessProblems', '#HostelLife', '#Placements', '#AcademicChaos', '#CampusCrime', '#LabLife', '#HostelLife'];
+  const allTags = ['#CrushAlert', '#ExamSeason', '#MessProblems', '#HostelLife', '#Placements', '#AcademicChaos', '#CampusCrime', '#LabLife'];
 
   // Load incoming swipes
   useEffect(() => {
@@ -279,13 +279,16 @@ function CampusPulse() {
   async function toggleConfessionReaction(confessionId: string, emoji: string) {
     try {
       const res = await postJSON('/api/reactions/toggle', { targetType: 'confession', targetId: confessionId, emoji });
-      // Update local reactionCount depending on response
+      // The backend tells us explicitly whether this was an add, a removal,
+      // or a swap (old emoji removed + new one added — net count delta 0).
+      // Guessing this from response shape alone previously miscounted swaps
+      // as +1 instead of 0.
+      const delta = res?.action === 'added' ? 1 : res?.action === 'removed' ? -1 : 0;
       setConfessions((prev) => prev.map((c) => {
         if (c._id !== confessionId) return c;
-        const delta = res?.reaction ? 1 : -1;
         return { ...c, reactionCount: Math.max(0, (c.reactionCount || 0) + delta) };
       }));
-      setToast(res?.message || (res?.reaction ? 'Reaction added' : 'Reaction removed'));
+      setToast(res?.message || 'Reaction updated');
     } catch (err: any) {
       setToast(err?.error || err?.message || 'Failed to toggle reaction');
     }
@@ -873,7 +876,7 @@ function CampusPulse() {
                                 (commentsById[confession._id] || []).map((cm: any) => (
                                   <div key={cm._id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
                                     <div>
-                                      <div style={{ fontFamily: 'var(--f3)', fontSize: 11, color: 'var(--t1)', fontWeight: 600 }}>{cm.author === getAuthTokens().userId ? 'You' : cm.author}</div>
+                                      <div style={{ fontFamily: 'var(--f3)', fontSize: 11, color: 'var(--t1)', fontWeight: 600 }}>{cm.author === getAuthTokens().userId ? 'You' : (cm.authorName || 'User')}</div>
                                       <div style={{ fontFamily: 'var(--f2)', fontSize: 13, color: 'var(--t2)' }}>{cm.text}</div>
                                     </div>
                                     <div>

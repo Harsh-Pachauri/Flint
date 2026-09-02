@@ -28,6 +28,16 @@ const Register: React.FC = () => {
     try {
       const res = await postJSON('/api/auth/register', { email, password, phone, name });
       saveAuthTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken, userId: res.userId });
+      // The backend has no field for name at registration (it belongs on
+      // Profile, set during onboarding) — hand it off via localStorage so
+      // Onboarding's name field can pre-fill it instead of asking twice.
+      if (name.trim()) {
+        try {
+          localStorage.setItem('pendingName', name.trim());
+        } catch (e) {
+          // localStorage unavailable — non-critical, onboarding just asks again
+        }
+      }
       const onboardingComplete = res?.onboardingComplete === true || res?.user?.onboardingComplete === true;
       setOnboardingCompleteState(onboardingComplete);
       setMessage('Account created! Setting up your profile...');
