@@ -15,7 +15,9 @@ const uploadPhotoFilter = (req, file, cb) => {
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPEG, PNG, and WebP images are allowed'), false);
+    const err = new Error('Only JPEG, PNG, and WebP images are allowed');
+    err.status = 400; // picked up by errorHandler's generic branch (err.status || 500)
+    cb(err, false);
   }
 };
 
