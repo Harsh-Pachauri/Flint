@@ -108,6 +108,25 @@ io.on('connection', (socket) => {
     io.to(`wyr:${data.wyrSessionId}`).emit('wyr:reveal', data);
   });
 
+  // Dare Roulette events — same client-driven relay pattern as story/WYR
+  // above: the REST endpoints persist the action, the client that made the
+  // call re-emits it here so the partner's client updates live.
+  socket.on('join:dare', (drSessionId) => {
+    socket.join(`dare:${drSessionId}`);
+  });
+
+  socket.on('dare:spin-result', (data) => {
+    io.to(`dare:${data.drSessionId}`).emit('dare:spin-result', data);
+  });
+
+  socket.on('dare:consent-update', (data) => {
+    io.to(`dare:${data.drSessionId}`).emit('dare:consent-update', data);
+  });
+
+  socket.on('dare:completion-ready', (data) => {
+    io.to(`dare:${data.drSessionId}`).emit('dare:completion-ready', data);
+  });
+
   socket.on('disconnect', () => {
     console.log(`User ${socket.userId} disconnected`);
   });

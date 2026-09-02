@@ -1,5 +1,22 @@
 const { Playroom, PlayroomSession, PlayroomScore, Match } = require('../models');
 
+// Fixed prompt bank for Would You Rather sessions. Nothing in this subsystem
+// previously created WYRQuestion documents at all (getWYRSession would
+// always return an empty question list) — this is what actually seeds a
+// playable round when a session starts.
+const WOULD_YOU_RATHER_QUESTION_BANK = [
+  { optionA: 'A spontaneous weekend road trip', optionB: 'A planned week-long vacation' },
+  { optionA: 'Coffee dates', optionB: 'Late-night food runs' },
+  { optionA: 'Texting all day', optionB: 'One long call at night' },
+  { optionA: 'Meeting the friend group early', optionB: 'Keeping it just us for a while' },
+  { optionA: 'A home-cooked dinner', optionB: 'Trying a new restaurant' },
+  { optionA: 'Slow burn', optionB: 'Love at first sight' },
+  { optionA: 'Beach sunset', optionB: 'City skyline at night' },
+  { optionA: 'Deep 2am conversations', optionB: 'Easy, playful banter' },
+  { optionA: 'Surprise plans', optionB: 'Knowing the plan in advance' },
+  { optionA: 'A love song written about you', optionB: 'A playlist made for you' }
+];
+
 // Get playroom state
 exports.getPlayroom = async (req, res) => {
   try {
@@ -23,7 +40,7 @@ exports.getPlayroom = async (req, res) => {
       playroom = new Playroom({
         matchId,
         spiceLevel: 1,
-        unlockedFeatures: ['storyBuilding', 'dareRoulette'],
+        unlockedFeatures: ['storyBuilding', 'dareRoulette', 'wouldYouRather'],
         isActive: false
       });
       await playroom.save();
@@ -35,6 +52,26 @@ exports.getPlayroom = async (req, res) => {
       status: 'active'
     });
 
+    // The type-specific session id (DareRouletteSession/StorySession/
+    // WYRSession) is otherwise only ever handed back once, in
+    // startGameSession's response — without resolving it here too, a user
+    // who leaves and reopens the playroom mid-game has no way to resume,
+    // since every other game endpoint needs that id, not the generic
+    // PlayroomSession id.
+    let gameSessionId = null;
+    if (activeSession) {
+      if (activeSession.gameType === 'dareRoulette') {
+        const drSession = await require('../models').DareRouletteSession.findOne({ sessionId: activeSession._id });
+        gameSessionId = drSession?._id || null;
+      } else if (activeSession.gameType === 'storyBuilding') {
+        const storySession = await require('../models').StorySession.findOne({ sessionId: activeSession._id });
+        gameSessionId = storySession?._id || null;
+      } else if (activeSession.gameType === 'wouldYouRather') {
+        const wyrSession = await require('../models').WYRSession.findOne({ sessionId: activeSession._id });
+        gameSessionId = wyrSession?._id || null;
+      }
+    }
+
     res.json({
       playroomId: playroom._id,
       spiceLevel: playroom.spiceLevel,
@@ -43,7 +80,8 @@ exports.getPlayroom = async (req, res) => {
       activeSession: activeSession ? {
         sessionId: activeSession._id,
         gameType: activeSession.gameType,
-        currentRound: activeSession.currentRound
+        currentRound: activeSession.currentRound,
+        gameSessionId
       } : null
     });
   } catch (error) {
@@ -73,7 +111,7 @@ exports.activatePlayroom = async (req, res) => {
       playroom = new Playroom({
         matchId,
         spiceLevel: 1,
-        unlockedFeatures: ['storyBuilding', 'dareRoulette'],
+        unlockedFeatures: ['storyBuilding', 'dareRoulette', 'wouldYouRather'],
         isActive: true
       });
     } else {
@@ -160,14 +198,27 @@ exports.startGameSession = async (req, res) => {
       });
       await gameSession.save();
     } else if (gameType === 'wouldYouRather') {
-      const WYRSession = require('../models').WYRSession;
+      const { WYRSession, WYRQuestion } = require('../models');
+      const questionPrompts = WOULD_YOU_RATHER_QUESTION_BANK;
       gameSession = new WYRSession({
         sessionId: session._id,
-        totalQuestions: 10,
+        totalQuestions: questionPrompts.length,
         syncScore: 0,
         status: 'active'
       });
       await gameSession.save();
+
+      // Nothing else creates WYRQuestion documents anywhere in this
+      // subsystem — without seeding them here, getWYRSession always
+      // returns an empty question list and the game has nothing to play.
+      await WYRQuestion.insertMany(
+        questionPrompts.map((q, index) => ({
+          wyrSessionId: gameSession._id,
+          optionA: q.optionA,
+          optionB: q.optionB,
+          questionNumber: index + 1
+        }))
+      );
     }
 
     res.status(201).json({

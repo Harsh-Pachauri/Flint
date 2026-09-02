@@ -15,15 +15,18 @@ exports.getWYRSession = async (req, res) => {
     // Get all questions
     const questions = await WYRQuestion.find({ wyrSessionId });
 
-    // Get answers for current user
-    const userAnswers = await WYRAnswer.find({
-      questionId: { $in: questions.map(q => q._id) },
-      userId
+    // Get every answer for these questions (both users) — the partner's
+    // choice is only ever surfaced to the response below once a question's
+    // isRevealed flag is true, so nothing leaks before both have answered.
+    const allAnswers = await WYRAnswer.find({
+      questionId: { $in: questions.map(q => q._id) }
     });
 
-    // Build response - only include revealed answers
     const questionsWithAnswers = questions.map(q => {
-      const userAnswer = userAnswers.find(a => a.questionId.toString() === q._id.toString());
+      const answersForQuestion = allAnswers.filter(a => a.questionId.toString() === q._id.toString());
+      const userAnswer = answersForQuestion.find(a => a.userId.toString() === userId.toString());
+      const partnerAnswerDoc = answersForQuestion.find(a => a.userId.toString() !== userId.toString());
+      const isRevealed = !!(userAnswer && userAnswer.isRevealed);
 
       return {
         questionId: q._id,
@@ -36,6 +39,12 @@ exports.getWYRSession = async (req, res) => {
           isRevealed: userAnswer.isRevealed,
           reactionEmoji: userAnswer.reactionEmoji,
           discussionNote: userAnswer.discussionNote
+        } : null,
+        // Only populated once this question is actually revealed — never
+        // exposed while the partner's answer is still pending.
+        partnerAnswer: isRevealed && partnerAnswerDoc ? {
+          chosenOption: partnerAnswerDoc.chosenOption,
+          reactionEmoji: partnerAnswerDoc.reactionEmoji
         } : null
       };
     });
