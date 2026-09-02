@@ -12,7 +12,7 @@ const safeDivide = (numerator, denominator) => {
 
 const toObjectId = id => {
   try {
-    return mongoose.Types.ObjectId(id);
+    return new mongoose.Types.ObjectId(id);
   } catch {
     return null;
   }
@@ -160,7 +160,13 @@ const getRecommendations = async (userId, options = {}) => {
 
   const query = {
     userId: { $nin: Array.from(excludeIds) },
-    age: { $gte: ageMin, $lte: ageMax }
+    age: { $gte: ageMin, $lte: ageMax },
+    // Mutual preference: candidate must want the viewer's gender too (or be
+    // open to 'both') — matching the same rule enforced in the discovery feed.
+    $or: [
+      { genderPreference: 'both' },
+      { genderPreference: userProfile.gender }
+    ]
   };
 
   if (userProfile.genderPreference && userProfile.genderPreference !== 'both') {
@@ -176,7 +182,6 @@ const getRecommendations = async (userId, options = {}) => {
     .lean();
 
   const candidateIds = candidates.map(profile => profile.userId.toString());
-  const candidateIdSet = new Set(candidateIds);
 
   const candidateStats = await aggregateSwipeSummary(candidateIds.map(toObjectId).filter(Boolean));
 
