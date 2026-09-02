@@ -95,10 +95,17 @@ const profileSchema = new mongoose.Schema({
     }
   ],
   location: {
+    // No `default: 'Point'` here deliberately: with a default, Mongoose
+    // creates `{ type: 'Point' }` (no coordinates) for every profile that
+    // doesn't supply a location, and the 2dsphere index below then rejects
+    // that as an invalid partial GeoJSON value ("Point must be an array or
+    // object, instead got type missing") on every save. A profile with no
+    // real location should have no `location` value at all, not a broken
+    // placeholder one — the app must never default this to real-looking
+    // coordinates like [0, 0] either, since that's a real place on Earth.
     type: {
       type: String,
-      enum: ['Point'],
-      default: 'Point'
+      enum: ['Point']
     },
     coordinates: [Number],
     address: String

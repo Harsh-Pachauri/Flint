@@ -8,7 +8,7 @@ const playroomSessionSchema = new mongoose.Schema({
   },
   gameType: {
     type: String,
-    enum: ['dareRoulette', 'storyBuilding', 'wyouldYouRather'],
+    enum: ['dareRoulette', 'storyBuilding', 'wouldYouRather'],
     required: true
   },
   status: {

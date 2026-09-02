@@ -33,4 +33,10 @@ const swipeSchema = new mongoose.Schema({
   }
 });
 
+// A user can only have one recorded swipe decision per target — this is what
+// acceptSwipe/rejectSwipe already assumed (`findOne({fromUserId, toUserId})`)
+// but nothing previously enforced. Prevents duplicate Swipe rows from repeated
+// swipe requests (double-clicks, retries, concurrent requests).
+swipeSchema.index({ fromUserId: 1, toUserId: 1 }, { unique: true });
+
 module.exports = mongoose.model('Swipe', swipeSchema);
