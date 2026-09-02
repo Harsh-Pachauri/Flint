@@ -41,7 +41,7 @@ const validateDatingType = (type) => {
 };
 
 const validateGameType = (type) => {
-  return ['dareRoulette', 'storyBuilding', 'wyouldYouRather'].includes(type);
+  return ['dareRoulette', 'storyBuilding', 'wouldYouRather'].includes(type);
 };
 
 const validateRating = (rating) => {
