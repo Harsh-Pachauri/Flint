@@ -1,14 +1,10 @@
 const mongoose = require('mongoose');
-const { Comment, Confession, Poll, User } = require('../models');
+const { Comment, Confession, Poll, Profile } = require('../models');
+const { isAdminUser } = require('../utils/adminAuth');
 
 const targetModels = {
   confession: Confession,
   poll: Poll
-};
-
-const isAdminUser = async (userId) => {
-  const user = await User.findById(userId);
-  return user && user.email === 'flintdating@outlook.com';
 };
 
 exports.addComment = async (req, res) => {
@@ -86,11 +82,21 @@ exports.getComments = async (req, res) => {
     }
 
     const comments = await Comment.find({ targetType, targetId }).sort({ createdAt: 1 }).lean();
+
+    // Batch-resolve author display names (one query for the whole thread,
+    // not one per comment). User has no `name` field — it lives on Profile.
+    const authorIds = [...new Set(comments.map((c) => c.author.toString()))];
+    const authorProfiles = await Profile.find({ userId: { $in: authorIds } })
+      .select('userId name')
+      .lean();
+    const authorNameMap = new Map(authorProfiles.map((p) => [p.userId.toString(), p.name]));
+
     const commentMap = new Map();
     const threaded = [];
 
     comments.forEach((comment) => {
       comment.replies = [];
+      comment.authorName = authorNameMap.get(comment.author.toString()) || 'User';
       commentMap.set(comment._id.toString(), comment);
     });
 

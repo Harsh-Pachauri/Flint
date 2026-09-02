@@ -233,6 +233,13 @@ exports.initializeChatSocket = (io) => {
       socket.join(`chat:${matchId}`);
     });
 
+    // Allows a client to keep one persistent socket connection alive while
+    // moving between matches, instead of disconnecting/reconnecting on every
+    // switch — it just leaves the old chat room and joins the new one.
+    socket.on('leave:chat', (matchId) => {
+      socket.leave(`chat:${matchId}`);
+    });
+
     socket.on('message:send', async (data) => {
       try {
         const { matchId, content, mediaUrl } = data;
@@ -249,6 +256,7 @@ exports.initializeChatSocket = (io) => {
         await message.save();
 
         io.to(`chat:${matchId}`).emit('message:received', {
+          matchId,
           messageId: message._id,
           senderId: message.senderId,
           content: message.content,

@@ -1,9 +1,4 @@
-const { Poll, User } = require('../models');
-
-const isAdminUser = async (userId) => {
-  const user = await User.findById(userId);
-  return user && user.email === 'flintdating@outlook.com';
-};
+const { Poll } = require('../models');
 
 exports.createPoll = async (req, res) => {
   try {

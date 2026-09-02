@@ -1,19 +1,9 @@
-const { Confession, User } = require('../models');
-
-const isAdminUser = async (userId) => {
-  const user = await User.findById(userId);
-  return user && (
-    user.email === 'flintdating@outlook.com' ||
-    user.email === 'ph2005@gmail.com' ||
-    user.email === 'hp@gmail.com' ||
-    user.email === 'hp2005@example.com'
-  );
-};
+const { Confession } = require('../models');
+const { isAdminUser } = require('../utils/adminAuth');
 
 const formatConfession = (confession, currentUserId) => {
   const isOwner = currentUserId && confession.author?.toString() === currentUserId.toString();
   const showAuthor = !confession.isAnonymous || isOwner;
-   // 6a0050000354cd159572f175
   return {
     _id: confession._id,
     author: showAuthor ? confession.author : null,
@@ -63,6 +53,18 @@ exports.getConfessions = async (req, res) => {
     const sortMode = req.query.sort;
 
     const filter = { status: 'approved' };
+
+    // Admin-only: allow moderators to fetch confessions by any status (e.g.
+    // 'rejected') through this endpoint for review purposes. Ordinary users
+    // always get 'approved' only, regardless of what they pass.
+    const requestedStatus = req.query.status;
+    if (requestedStatus && ['pending', 'approved', 'rejected'].includes(requestedStatus)) {
+      const isAdmin = await isAdminUser(req.user.userId);
+      if (isAdmin) {
+        filter.status = requestedStatus;
+      }
+    }
+
     if (tag) {
       filter.tags = tag;
     }

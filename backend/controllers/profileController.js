@@ -1,5 +1,45 @@
-const { Profile, User, College } = require('../models');
+const mongoose = require('mongoose');
+const { Profile, College } = require('../models');
 const { uploadFile, deleteFile } = require('../utils/uploadService');
+const { validateCoordinates } = require('../utils/validators');
+
+// Resolves a client-supplied collegeId to a real College document. Never
+// invents/accepts an ID that doesn't correspond to an actual College row —
+// callers must look one up first via GET /api/colleges/search.
+async function resolveCollegeId(collegeId) {
+  if (!collegeId) return { collegeId: undefined, error: null };
+  if (!mongoose.Types.ObjectId.isValid(collegeId)) {
+    return { collegeId: undefined, error: 'Invalid college selected' };
+  }
+  const college = await College.findById(collegeId);
+  if (!college) {
+    return { collegeId: undefined, error: 'Invalid college selected' };
+  }
+  return { collegeId: college._id, error: null };
+}
+
+// Builds a location field from client-supplied coordinates, or returns
+// undefined if none were provided/valid — never defaults to [0, 0], which
+// would silently misrepresent "unknown location" as a real one (Null
+// Island). Distance-based feed/recommendation logic already treats an
+// absent/invalid location as "no location signal," which is the correct
+// behavior here.
+function resolveLocation(location) {
+  if (!location || !Array.isArray(location.coordinates)) {
+    return { location: undefined, error: null };
+  }
+  if (!validateCoordinates(location.coordinates)) {
+    return { location: undefined, error: 'Invalid coordinates' };
+  }
+  return {
+    location: {
+      type: 'Point',
+      coordinates: location.coordinates,
+      address: typeof location.address === 'string' ? location.address : undefined
+    },
+    error: null
+  };
+}
 
 // Create profile after registration
 exports.createProfile = async (req, res) => {
@@ -15,7 +55,9 @@ exports.createProfile = async (req, res) => {
       personality,
       year,
       depart,
-      vibewords
+      vibewords,
+      collegeId,
+      location
     } = req.body;
 
     // Validate required fields
@@ -42,6 +84,16 @@ exports.createProfile = async (req, res) => {
       });
     }
 
+    const { collegeId: resolvedCollegeId, error: collegeError } = await resolveCollegeId(collegeId);
+    if (collegeError) {
+      return res.status(400).json({ error: collegeError });
+    }
+
+    const { location: resolvedLocation, error: locationError } = resolveLocation(location);
+    if (locationError) {
+      return res.status(400).json({ error: locationError });
+    }
+
     // Normalize personality safely with clamping
     const clampValue = value => Math.max(0, Math.min(100, Number.isFinite(value) ? value : 50));
 
@@ -60,6 +112,7 @@ exports.createProfile = async (req, res) => {
     // Create profile with clean data
     const profile = new Profile({
       userId,
+      collegeId: resolvedCollegeId,
       name,
       age: ageNum,
       gender,
@@ -70,10 +123,7 @@ exports.createProfile = async (req, res) => {
       year: year ? Number(year) : null,
       depart: depart || '',
       vibewords: Array.isArray(vibewords) ? vibewords : [],
-      location: {
-        type: 'Point',
-        coordinates: [0, 0]
-      },
+      ...(resolvedLocation ? { location: resolvedLocation } : {}),
       photos: []
     });
 
@@ -95,7 +145,7 @@ exports.getMyProfile = async (req, res) => {
 
     const profile = await Profile.findOne({ userId })
       .populate('collegeId')
-      .populate('userId', 'email phone');
+      .populate('userId', 'email phone role');
 
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
@@ -125,14 +175,30 @@ exports.updateMyProfile = async (req, res) => {
       personalityTraits,
       year,
       depart,
-      vibewords
+      vibewords,
+      collegeId
     } = req.body;
 
     const updateData = {};
     const clampValue = value => Math.max(0, Math.min(100, Number.isFinite(value) ? value : 50));
 
     if (bio !== undefined) updateData.bio = bio;
-    if (location !== undefined) updateData.location = location;
+    if (location !== undefined) {
+      const { location: resolvedLocation, error: locationError } = resolveLocation(location);
+      if (locationError) {
+        return res.status(400).json({ error: locationError });
+      }
+      if (resolvedLocation) {
+        updateData.location = resolvedLocation;
+      }
+    }
+    if (collegeId !== undefined) {
+      const { collegeId: resolvedCollegeId, error: collegeError } = await resolveCollegeId(collegeId);
+      if (collegeError) {
+        return res.status(400).json({ error: collegeError });
+      }
+      updateData.collegeId = resolvedCollegeId;
+    }
     if (genderPreference !== undefined) updateData.genderPreference = genderPreference;
     if (datingType !== undefined) updateData.datingType = datingType;
     if (photos !== undefined) updateData.photos = photos;
@@ -259,6 +325,9 @@ exports.uploadPhotos = async (req, res) => {
 
     // Max 6 photos
     const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
     if (profile.photos.length + req.files.length > 6) {
       return res.status(400).json({ error: 'Maximum 6 photos allowed' });
     }

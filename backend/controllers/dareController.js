@@ -1,4 +1,18 @@
-const { DareSpin, DareConsent, DareCard, DareCompletion, PlayroomSession, DareRouletteSession, Notification } = require('../models');
+const { DareSpin, DareConsent, DareCard, DareCompletion, PlayroomSession, DareRouletteSession, Playroom, Match, Notification } = require('../models');
+
+// Resolve the two authorized participant userIds for a dare spin by walking
+// spin -> drSession -> playSession -> playroom -> match.
+async function getMatchParticipantsForSpin(spin) {
+  const drSession = await DareRouletteSession.findById(spin.drSessionId);
+  if (!drSession) return null;
+  const playSession = await PlayroomSession.findById(drSession.sessionId);
+  if (!playSession) return null;
+  const playroom = await Playroom.findById(playSession.playroomId);
+  if (!playroom) return null;
+  const match = await Match.findById(playroom.matchId);
+  if (!match) return null;
+  return match.userIds.map((u) => u._id.toString());
+}
 
 // Spin the wheel
 exports.spinWheel = async (req, res) => {
@@ -65,6 +79,18 @@ exports.submitConsent = async (req, res) => {
       return res.status(404).json({ error: 'Spin not found' });
     }
 
+    // Verify the requester is actually one of the two people in this match
+    const participantIds = await getMatchParticipantsForSpin(spin);
+    if (!participantIds || !participantIds.includes(userId.toString())) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Prevent submitting consent more than once for the same spin
+    const existingConsent = await DareConsent.findOne({ spinId, userId });
+    if (existingConsent) {
+      return res.status(400).json({ error: 'You have already responded to this spin' });
+    }
+
     // Record consent
     const consent = new DareConsent({
       spinId,
@@ -75,8 +101,11 @@ exports.submitConsent = async (req, res) => {
 
     await consent.save();
 
-    // Check if both users have consented
-    const consents = await DareConsent.find({ spinId });
+    // Check if both real match participants have consented (defensively
+    // filtered to participantIds in case of any stale/unrelated records)
+    const consents = (await DareConsent.find({ spinId })).filter((c) =>
+      participantIds.includes(c.userId.toString())
+    );
 
     if (consents.length === 2 && consents.every(c => c.accepted)) {
       // Generate AI dare and create DareCard

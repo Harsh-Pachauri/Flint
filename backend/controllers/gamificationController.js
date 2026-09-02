@@ -1,4 +1,4 @@
-const { Reward, NewsFeed, Notification, User } = require('../models');
+const { Reward, NewsFeed, Notification } = require('../models');
 
 // Claim daily reward
 exports.claimReward = async (req, res) => {
@@ -111,7 +111,6 @@ exports.getRewardStatus = async (req, res) => {
 // Get news feed - filtered by user interests
 exports.getNewsFeed = async (req, res) => {
   try {
-    const userId = req.user.userId;
     const { tags, page = 1, limit = 10 } = req.query;
 
     let query = {};

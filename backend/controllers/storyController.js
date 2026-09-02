@@ -6,7 +6,6 @@ const { uploadFile } = require('../utils/uploadService');
 exports.getStorySession = async (req, res) => {
   try {
     const { storySessionId } = req.params;
-    const userId = req.user.userId;
 
     const storySession = await StorySession.findById(storySessionId);
 

@@ -99,7 +99,7 @@ exports.startGameSession = async (req, res) => {
     const userId = req.user.userId;
     const { gameType } = req.body;
 
-    const validGameTypes = ['dareRoulette', 'storyBuilding', 'wyouldYouRather'];
+    const validGameTypes = ['dareRoulette', 'storyBuilding', 'wouldYouRather'];
 
     if (!gameType || !validGameTypes.includes(gameType)) {
       return res.status(400).json({ error: 'Invalid game type' });
@@ -109,6 +109,12 @@ exports.startGameSession = async (req, res) => {
 
     if (!playroom) {
       return res.status(404).json({ error: 'Playroom not found' });
+    }
+
+    // Verify requester is one of the two users in the underlying match
+    const match = await Match.findById(playroom.matchId);
+    if (!match || !match.userIds.some((u) => u._id.toString() === userId)) {
+      return res.status(403).json({ error: 'Unauthorized' });
     }
 
     // Verify game is unlocked
@@ -153,7 +159,7 @@ exports.startGameSession = async (req, res) => {
         status: 'active'
       });
       await gameSession.save();
-    } else if (gameType === 'wyouldYouRather') {
+    } else if (gameType === 'wouldYouRather') {
       const WYRSession = require('../models').WYRSession;
       gameSession = new WYRSession({
         sessionId: session._id,
@@ -187,6 +193,12 @@ exports.endGameSession = async (req, res) => {
       return res.status(404).json({ error: 'Playroom not found' });
     }
 
+    // Verify requester is one of the two users in the underlying match
+    const authMatch = await Match.findById(playroom.matchId);
+    if (!authMatch || !authMatch.userIds.some((u) => u._id.toString() === userId)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     const session = await PlayroomSession.findById(sessionId);
 
     if (!session) {
@@ -202,7 +214,6 @@ exports.endGameSession = async (req, res) => {
     await session.save();
 
     // Get scores for both users
-    const match = await Match.findOne({ _id: playroom.matchId });
     const scores = await PlayroomScore.find({ playroomId });
 
     // Calculate average rating

@@ -1,9 +1,5 @@
-const { Reaction, Confession, User } = require('../models');
-
-const isAdminUser = async (userId) => {
-  const user = await User.findById(userId);
-  return user && user.email === 'flintdating@outlook.com';
-};
+const { Reaction, Confession } = require('../models');
+const { isAdminUser } = require('../utils/adminAuth');
 
 const updateConfessionReactionCounts = async (targetId, emoji, delta) => {
   if (!emoji) return;
@@ -92,17 +88,31 @@ exports.toggleReaction = async (req, res) => {
     const normalizedEmoji = emoji.trim();
 
     if (!existing) {
-      const reaction = new Reaction({
-        user: req.user.userId,
-        targetType,
-        targetId,
-        emoji: normalizedEmoji
-      });
-      await reaction.save();
+      let reaction;
+      try {
+        reaction = new Reaction({
+          user: req.user.userId,
+          targetType,
+          targetId,
+          emoji: normalizedEmoji
+        });
+        await reaction.save();
+      } catch (err) {
+        if (err.code === 11000) {
+          // Lost a race with a concurrent identical toggle request — the
+          // reaction already exists, treat this as a no-op add rather than
+          // leaking a raw MongoDB duplicate-key error to the client.
+          reaction = await Reaction.findOne({ user: req.user.userId, targetType, targetId });
+          return res.status(200).json({ success: true, action: 'added', message: 'Reaction added', reaction });
+        }
+        throw err;
+      }
       if (targetType === 'confession') {
         await updateConfessionReactionCounts(targetId, normalizedEmoji, 1);
       }
-      return res.status(201).json({ success: true, message: 'Reaction added', reaction });
+      // action: distinguishes a fresh add (net reaction-count delta +1) from
+      // a swap below (net delta 0), so clients can update counts correctly.
+      return res.status(201).json({ success: true, action: 'added', message: 'Reaction added', reaction });
     }
 
     if (existing.emoji === normalizedEmoji) {
@@ -110,7 +120,7 @@ exports.toggleReaction = async (req, res) => {
       if (targetType === 'confession') {
         await updateConfessionReactionCounts(targetId, normalizedEmoji, -1);
       }
-      return res.json({ success: true, message: 'Reaction removed' });
+      return res.json({ success: true, action: 'removed', message: 'Reaction removed' });
     }
 
     const oldEmoji = existing.emoji;
@@ -122,8 +132,11 @@ exports.toggleReaction = async (req, res) => {
       await updateConfessionReactionCounts(targetId, normalizedEmoji, 1);
     }
 
-    res.json({ success: true, message: 'Reaction updated', reaction: existing });
+    res.json({ success: true, action: 'swapped', message: 'Reaction updated', reaction: existing });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'Duplicate reaction' });
+    }
     res.status(500).json({ error: error.message });
   }
 };
