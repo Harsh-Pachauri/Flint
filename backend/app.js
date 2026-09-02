@@ -21,7 +21,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Connection
 const connectDB = require('./config/database');
-connectDB();
+const migrateAdminRoles = require('./utils/migrateAdminRoles');
+connectDB().then(() => migrateAdminRoles());
 
 // Initialize upload service
 const { initUploadService } = require('./utils/uploadService');
@@ -59,15 +60,17 @@ const io = socketIO(server, {
 });
 
 // Socket authentication middleware
+const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('./utils/tokenService');
+
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) {
     return next(new Error('Authentication token required'));
   }
 
-  const jwt = require('jsonwebtoken');
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     socket.userId = decoded.userId;
     next();
   } catch (error) {
