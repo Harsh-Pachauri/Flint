@@ -1,5 +1,6 @@
 // middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../utils/tokenService');
 
 const authMiddleware = (req, res, next) => {
   try {
@@ -11,7 +12,7 @@ const authMiddleware = (req, res, next) => {
 
     const token = authHeader.slice(7); // Remove 'Bearer ' prefix
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded;
     next();
   } catch (error) {
