@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE, getAuthToken, getJSON } from '../../utils/api';
+import Playroom from '../playroom/Playroom';
 
 type MatchItem = {
   matchId: string;
@@ -100,6 +101,7 @@ function Matches() {
   const [sending, setSending] = useState(false);
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#/matches');
   const [showMatchesMobile, setShowMatchesMobile] = useState(false);
+  const [playroomOpen, setPlayroomOpen] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const currentRoomRef = useRef<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -437,11 +439,9 @@ function Matches() {
                             </button>
                           </div>
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
-                            {/* Game shortcut temporarily disabled.
-                            <button type="button" onClick={() => setToast('Open the playroom panel on the right to start a game.')} style={{ background: 'var(--vid)', border: '1px solid rgba(139,92,246,0.25)', color: 'var(--vio)', borderRadius: '100px', padding: '7px 12px', cursor: 'pointer', fontFamily: 'var(--f3)', fontSize: '9px', letterSpacing: '0.07em' }}>
-                              SEND GAME
+                            <button type="button" onClick={() => setPlayroomOpen(true)} style={{ background: 'var(--vid)', border: '1px solid rgba(139,92,246,0.25)', color: 'var(--vio)', borderRadius: '100px', padding: '7px 12px', cursor: 'pointer', fontFamily: 'var(--f3)', fontSize: '9px', letterSpacing: '0.07em' }}>
+                              🎮 PLAYROOM
                             </button>
-                            */}
                             <button type="button" onClick={() => {
                               if (!activeMatchProfileId) {
                                 setToast('Could not open profile for this match');
@@ -465,16 +465,43 @@ function Matches() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', position: 'sticky', top: '16px' }}>
-              {/*
-              Game-related cards are intentionally hidden for now:
-              - Compatibility
-              - Playroom
-              - Active Game
-              */}
+              {activeMatchId && (
+                <button
+                  type="button"
+                  onClick={() => setPlayroomOpen(true)}
+                  style={{
+                    textAlign: 'left',
+                    background: 'linear-gradient(135deg, rgba(224,48,192,0.14), rgba(139,92,246,0.14))',
+                    border: '1px solid rgba(224,48,192,0.22)',
+                    borderRadius: '18px',
+                    padding: '18px',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--glow-spark)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                >
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(224,48,192,0.35),transparent)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, var(--spark), var(--vio))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🎮</div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--f1)', fontWeight: 700, fontSize: '14px', color: 'var(--t1)' }}>Playroom</div>
+                      <div style={{ fontFamily: 'var(--f3)', fontSize: '8px', color: 'var(--t3)', letterSpacing: '0.06em' }}>
+                        {matchDetail?.playroomActive ? 'ACTIVE · TAP TO PLAY' : 'DARE · STORY · WYR'}
+                      </div>
+                    </div>
+                  </div>
+                  <p style={{ fontFamily: 'var(--f2)', fontSize: '11px', fontWeight: 300, color: 'var(--t2)', lineHeight: 1.65, margin: 0 }}>
+                    Skip the awkward first message. Spin for a dare, build a story together, or find out how in sync you really are.
+                  </p>
+                </button>
+              )}
               <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '16px' }}>
                 <div style={{ fontFamily: 'var(--f3)', fontSize: '9px', color: 'var(--spark)', letterSpacing: '0.12em', marginBottom: '12px' }}>MATCH INFO</div>
                 <div style={{ fontFamily: 'var(--f2)', fontSize: '12px', color: 'var(--t2)', lineHeight: 1.7 }}>
-                  Game and playroom modules are temporarily hidden. Use chat and profile details for now.
+                  Use chat, the playroom, and profile details to break the ice.
                 </div>
               </div>
             </div>
@@ -483,6 +510,14 @@ function Matches() {
       </div>
 
       {showMatchesMobile ? null : null}
+
+      {playroomOpen && activeMatchId ? (
+        <Playroom
+          matchId={activeMatchId}
+          otherUserName={fallbackOtherUser}
+          onClose={() => setPlayroomOpen(false)}
+        />
+      ) : null}
 
       {toast ? (
         <div style={{ position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)', background: 'rgba(19,18,38,0.9)', backdropFilter: 'blur(12px)', border: '1px solid var(--bmd)', borderRadius: '100px', padding: '10px 20px', fontFamily: 'var(--f3)', fontSize: '10px', color: 'var(--t1)', letterSpacing: '0.07em', zIndex: 120, animation: 'toastIn 0.3s ease', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>

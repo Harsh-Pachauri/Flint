@@ -18,6 +18,12 @@ type Toast = {
   type: 'success' | 'error';
 };
 
+const STATUS_META: Record<string, { label: string; color: string; dcolor: string }> = {
+  pending: { label: 'PENDING', color: 'var(--amber)', dcolor: 'rgba(245,158,11,0.14)' },
+  approved: { label: 'APPROVED', color: 'var(--green)', dcolor: 'rgba(34,197,94,0.14)' },
+  rejected: { label: 'REJECTED', color: 'var(--rose)', dcolor: 'var(--rod)' },
+};
+
 function AdminPanel() {
   const [confessions, setConfessions] = useState<Confession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,180 +100,162 @@ function AdminPanel() {
     }
   }
 
+  const pendingCount = confessions.filter((c) => c.status === 'pending').length;
+
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'DM Mono' }}>
-      <h1 style={{ color: 'var(--spark)', marginBottom: '30px' }}>🛡️ Admin Panel - Confession Moderation</h1>
+    <div style={{ position: 'relative', background: 'var(--void)', minHeight: '100vh', color: 'var(--t1)', overflow: 'hidden' }}>
+      <div className="orb" style={{ width: '480px', height: '480px', top: '-140px', right: '-100px', background: 'radial-gradient(circle, rgba(224,48,192,0.07) 0%, transparent 70%)', filter: 'blur(100px)' }} />
+      <div className="orb" style={{ width: '380px', height: '380px', top: '520px', left: '-110px', background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)', filter: 'blur(100px)' }} />
 
-      {/* Toast */}
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            background: toast.type === 'success' ? '#10b981' : '#ef4444',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', margin: '0 auto', padding: '48px 24px 80px' }}>
+        <div className="eyebrow" style={{ marginBottom: 12 }}>MODERATION</div>
+        <h1 style={{ fontFamily: 'var(--f1)', fontWeight: 800, fontSize: '30px', letterSpacing: '-0.02em', color: 'var(--t1)', marginBottom: 8 }}>
+          Admin Panel
+        </h1>
+        <p style={{ fontFamily: 'var(--f2)', fontSize: '13px', color: 'var(--t3)', marginBottom: 32 }}>
+          Review and moderate confessions before they go live.
+        </p>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', borderBottom: '1px solid var(--border)' }}>
-        {(['pending', 'approved', 'all'] as const).map(status => (
-          <button
-            key={status}
-            onClick={() => setActiveStatus(status)}
+        {/* Toast */}
+        {toast && (
+          <div
             style={{
-              padding: '12px 20px',
-              background: activeStatus === status ? 'var(--spark)' : 'transparent',
-              color: activeStatus === status ? 'white' : 'var(--t3)',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: activeStatus === status ? 'bold' : 'normal',
-              borderBottom: activeStatus === status ? '2px solid var(--spark)' : 'none',
-              transition: 'all 0.2s'
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              background: toast.type === 'success' ? 'var(--green)' : 'var(--rose)',
+              color: '#0a0a12',
+              fontFamily: 'var(--f2)',
+              fontWeight: 600,
+              padding: '12px 22px',
+              borderRadius: '100px',
+              zIndex: 1000,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+              animation: 'toastIn 0.3s cubic-bezier(0.16,1,0.3,1)'
             }}
           >
-            {status === 'pending' && `⏳ Pending (${confessions.filter(c => c.status === 'pending').length})`}
-            {status === 'approved' && `✅ Approved`}
-            {status === 'all' && `📋 All`}
-          </button>
-        ))}
-      </div>
+            {toast.message}
+          </div>
+        )}
 
-      {/* Loading */}
-      {loading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--t2)' }}>
-          Loading confessions...
-        </div>
-      )}
-
-      {/* Confessions List */}
-      {!loading && confessions.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--t2)' }}>
-          No confessions to moderate
-        </div>
-      )}
-
-      {!loading && confessions.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {confessions.map(confession => (
-            <div
-              key={confession._id}
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
+          {(['pending', 'approved', 'all'] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => setActiveStatus(status)}
+              className="pill"
               style={{
-                border: `1px solid ${confession.status === 'pending' ? 'var(--amber)' : 'var(--spark)'}`,
-                borderRadius: '12px',
-                padding: '16px',
-                background: 'var(--card2)',
-                position: 'relative'
+                cursor: 'pointer',
+                fontSize: '11px',
+                padding: '9px 18px',
+                border: activeStatus === status ? '1px solid rgba(224,48,192,0.3)' : '1px solid var(--border)',
+                color: activeStatus === status ? 'var(--spark)' : 'var(--t3)',
+                background: activeStatus === status ? 'var(--spd)' : 'transparent',
+                transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)'
               }}
             >
-              {/* Status Badge */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  padding: '4px 8px',
-                  background: confession.status === 'pending' ? 'var(--amber)' : 'var(--spark)',
-                  color: 'white',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}
-              >
-                {confession.status.toUpperCase()}
-              </div>
-
-              {/* Header */}
-              <div style={{ marginBottom: '12px', paddingRight: '100px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--t3)', marginBottom: '4px' }}>
-                  {confession.isAnonymous ? '🔒 Anonymous' : '👤 Named'} • {new Date(confession.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-
-              {/* Text */}
-              <div style={{ fontSize: '14px', lineHeight: '1.6', marginBottom: '12px', color: 'var(--t1)' }}>
-                {confession.text}
-              </div>
-
-              {/* Tags */}
-              {confession.tags.length > 0 && (
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                  {confession.tags.map(tag => (
-                    <span
-                      key={tag}
-                      style={{
-                        padding: '4px 8px',
-                        background: 'rgba(224, 48, 192, 0.1)',
-                        color: 'var(--spark)',
-                        borderRadius: '4px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Stats */}
-              <div style={{ fontSize: '12px', color: 'var(--t3)', marginBottom: '12px' }}>
-                ❤️ {confession.reactionCount} reactions • 💬 {confession.commentsCount} comments
-              </div>
-
-              {/* Actions */}
-              {confession.status === 'pending' && (
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button
-                    onClick={() => approveConfession(confession._id)}
-                    style={{
-                      padding: '8px 16px',
-                      background: 'var(--spark)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      transition: 'opacity 0.2s'
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                  >
-                    ✅ Approve
-                  </button>
-                  <button
-                    onClick={() => rejectConfession(confession._id)}
-                    style={{
-                      padding: '8px 16px',
-                      background: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      transition: 'opacity 0.2s'
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                  >
-                    ❌ Reject
-                  </button>
-                </div>
-              )}
-            </div>
+              {status === 'pending' && `⏳ PENDING (${pendingCount})`}
+              {status === 'approved' && '✅ APPROVED'}
+              {status === 'all' && '📋 ALL'}
+            </button>
           ))}
         </div>
-      )}
+
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--s2)', borderTopColor: 'var(--spark)', margin: '0 auto 14px', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div style={{ fontFamily: 'var(--f3)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--t3)' }}>LOADING CONFESSIONS...</div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && confessions.length === 0 && (
+          <div className="card" style={{ textAlign: 'center', padding: '60px 24px' }}>
+            <div style={{ fontSize: 32, marginBottom: 10, animation: 'float 3s ease-in-out infinite' }}>🛡️</div>
+            <div style={{ fontFamily: 'var(--f2)', fontSize: 13, color: 'var(--t2)' }}>No confessions to moderate right now.</div>
+          </div>
+        )}
+
+        {/* Confessions List */}
+        {!loading && confessions.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {confessions.map((confession) => {
+              const meta = STATUS_META[confession.status] || STATUS_META.pending;
+              return (
+                <div
+                  key={confession._id}
+                  className="card"
+                  style={{ padding: '18px 20px' }}
+                >
+                  {/* Status Badge */}
+                  <div
+                    className="pill"
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      right: '16px',
+                      background: meta.dcolor,
+                      color: meta.color,
+                      border: `1px solid ${meta.color}`
+                    }}
+                  >
+                    {meta.label}
+                  </div>
+
+                  {/* Header */}
+                  <div style={{ marginBottom: '10px', paddingRight: '110px', fontFamily: 'var(--f3)', fontSize: 9, letterSpacing: '0.06em', color: 'var(--t3)' }}>
+                    {confession.isAnonymous ? '🔒 ANONYMOUS' : '👤 NAMED'} · {new Date(confession.createdAt).toLocaleDateString().toUpperCase()}
+                  </div>
+
+                  {/* Text */}
+                  <div style={{ fontFamily: 'var(--f2)', fontSize: '14px', lineHeight: '1.65', marginBottom: '14px', color: 'var(--t1)' }}>
+                    {confession.text}
+                  </div>
+
+                  {/* Tags */}
+                  {confession.tags.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                      {confession.tags.map((tag) => (
+                        <span key={tag} className="pill pill-spark">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Stats */}
+                  <div style={{ fontFamily: 'var(--f3)', fontSize: 10, letterSpacing: '0.05em', color: 'var(--t3)', marginBottom: '14px' }}>
+                    ❤️ {confession.reactionCount} REACTIONS · 💬 {confession.commentsCount} COMMENTS
+                  </div>
+
+                  {/* Actions */}
+                  {confession.status === 'pending' && (
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => approveConfession(confession._id)}
+                        className="btn-primary"
+                        style={{ padding: '9px 20px', fontSize: '12px' }}
+                      >
+                        ✅ Approve
+                      </button>
+                      <button
+                        onClick={() => rejectConfession(confession._id)}
+                        className="btn-ghost"
+                        style={{ padding: '9px 20px', fontSize: '12px', borderColor: 'var(--rose)', color: 'var(--rose)' }}
+                      >
+                        ❌ Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
